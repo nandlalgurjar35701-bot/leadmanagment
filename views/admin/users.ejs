@@ -1,0 +1,198 @@
+<%- include('../layouts/header') %>
+
+<div class="dashboard-container">
+  <div class="container">
+    
+    <!-- Page Header and Create User Action -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+      <div>
+        <h1 class="page-title mb-1">User Management</h1>
+        <p class="text-muted">Manage system users, create sales staff, and monitor system access.</p>
+      </div>
+      <div>
+        <button class="btn btn-primary px-4 py-2.5 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
+          <i class="fa-solid fa-plus me-1"></i> Add New User
+        </button>
+      </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <form action="/admin/users" method="GET">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="q" class="form-control py-2.5 shadow-sm" placeholder="Search by name or email..." value="<%= searchQuery %>">
+            <% if (searchQuery) { %>
+              <a href="/admin/users" class="btn btn-sm btn-link position-absolute end-0 top-50 translate-middle-y me-3 text-secondary text-decoration-none">
+                <i class="fa-solid fa-xmark"></i> Clear
+              </a>
+            <% } %>
+          </div>
+        </form>
+      </div>
+      <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex align-items-center justify-content-md-end">
+        <span class="text-muted small">
+          Showing <strong><%= users.length %></strong> out of <strong><%= totalCount %></strong> total users
+        </span>
+      </div>
+    </div>
+
+    <!-- Users Table Container -->
+    <div class="table-container shadow-sm border">
+      <div class="table-responsive">
+        <table class="table table-custom align-middle">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Role</th>
+              <th scope="col">Status</th>
+              <th scope="col">Created Date</th>
+              <th scope="col" class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (users.length > 0) { %>
+              <% users.forEach(function(u) { %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="bg-light p-2 rounded-circle me-3 text-secondary text-center" style="width: 40px; height: 40px; line-height: 24px;">
+                        <i class="fa-solid fa-user"></i>
+                      </div>
+                      <div>
+                        <strong class="text-dark"><%= u.name %></strong>
+                        <% if (u._id.toString() === user._id.toString()) { %>
+                          <span class="badge bg-secondary ms-1 small" style="font-size: 0.65rem;">You</span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </td>
+                  <td><%= u.email %></td>
+                  <td>
+                    <% if (u.role === 'Admin') { %>
+                      <span class="badge badge-custom badge-admin"><i class="fa-solid fa-shield-halved me-1"></i><%= u.role %></span>
+                    <% } else { %>
+                      <span class="badge badge-custom badge-sales"><i class="fa-solid fa-user-tag me-1"></i><%= u.role %></span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (u.isActive) { %>
+                      <span class="badge badge-custom badge-active"><i class="fa-solid fa-circle-check me-1"></i>Active</span>
+                    <% } else { %>
+                      <span class="badge badge-custom badge-inactive"><i class="fa-solid fa-circle-xmark me-1"></i>Inactive</span>
+                    <% } %>
+                  </td>
+                  <td class="text-muted small"><%= new Date(u.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                  <td class="text-center">
+                    <% if (u._id.toString() !== user._id.toString()) { %>
+                      <form action="/admin/users/toggle/<%= u._id %>" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-sm <%= u.isActive ? 'btn-outline-danger' : 'btn-outline-success' %> px-3 rounded-2">
+                          <% if (u.isActive) { %>
+                            <i class="fa-solid fa-ban me-1"></i> Deactivate
+                          <% } else { %>
+                            <i class="fa-solid fa-check me-1"></i> Activate
+                          <% } %>
+                        </button>
+                      </form>
+                    <% } else { %>
+                      <span class="text-muted small">No Actions</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-center py-5">
+                  <div class="text-muted mb-3">
+                    <i class="fa-solid fa-folder-open fa-3x text-light-emphasis"></i>
+                  </div>
+                  <h6 class="fw-bold">No Users Found</h6>
+                  <p class="text-muted small">Try refining your search query or add a new user to the system.</p>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <% if (totalPages > 1) { %>
+        <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+          <div class="small text-muted">
+            Page <strong><%= currentPage %></strong> of <strong><%= totalPages %></strong>
+          </div>
+          <nav aria-label="Page navigation">
+            <ul class="pagination pagination-custom mb-0">
+              
+              <!-- Previous Button -->
+              <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="/admin/users?q=<%= searchQuery %>&page=<%= currentPage - 1 %>" tabindex="-1">
+                  <i class="fa-solid fa-chevron-left small"></i> Prev
+                </a>
+              </li>
+
+              <!-- Page Numbers Loop -->
+              <% for(let i = 1; i <= totalPages; i++) { %>
+                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                  <a class="page-link" href="/admin/users?q=<%= searchQuery %>&page=<%= i %>"><%= i %></a>
+                </li>
+              <% } %>
+
+              <!-- Next Button -->
+              <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="/admin/users?q=<%= searchQuery %>&page=<%= currentPage + 1 %>">
+                  Next <i class="fa-solid fa-chevron-right small"></i>
+                </a>
+              </li>
+
+            </ul>
+          </nav>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+</div>
+
+<!-- Create User Bootstrap Modal -->
+<div class="modal fade modal-custom" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createUserModalLabel"><i class="fa-solid fa-user-plus text-primary me-2"></i>Create New User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="/admin/users" method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="modal-name" class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="modal-name" name="name" placeholder="E.g., Raj Malhotra" required>
+          </div>
+          <div class="mb-3">
+            <label for="modal-email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="modal-email" name="email" placeholder="E.g., raj@company.com" required>
+          </div>
+          <div class="mb-3">
+            <label for="modal-password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="modal-password" name="password" placeholder="At least 6 characters" minlength="6" required>
+          </div>
+          <div class="mb-3">
+            <label for="modal-role" class="form-label">User Role</label>
+            <select class="form-select" id="modal-role" name="role" required>
+              <option value="Sales User" selected>Sales User</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0 bg-light py-3">
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4 rounded-3"><i class="fa-solid fa-circle-check me-1"></i>Create User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

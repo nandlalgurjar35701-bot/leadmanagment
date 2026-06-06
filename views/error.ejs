@@ -1,0 +1,25 @@
+<%- include('layouts/header') %>
+
+<div class="container my-5 py-5 text-center">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="p-5 bg-white rounded-3 shadow-sm text-start">
+        <h2 class="fw-bold text-danger mb-3"><i class="fa-solid fa-circle-exclamation me-2"></i>System Error</h2>
+        <p class="text-muted mb-4">Something went wrong on our servers. Please try again later or contact the administrator if this problem persists.</p>
+        
+        <% if (typeof error !== 'undefined') { %>
+          <div class="bg-light p-3 rounded border mb-4">
+            <h6 class="fw-bold text-dark mb-2">Error Details:</h6>
+            <code class="text-danger small d-block" style="white-space: pre-wrap;"><%= error %></code>
+          </div>
+        <% } %>
+
+        <a href="/" class="btn btn-secondary px-4 py-2 rounded-3">
+          <i class="fa-solid fa-house me-1"></i> Return Home
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('layouts/footer') %>
