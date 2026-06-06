@@ -37,6 +37,13 @@
                 else priorityClass = 'bg-light text-dark border';
               %>
               <span class="badge rounded-pill <%= priorityClass %> px-3 py-1.5" style="font-size: 0.75rem;"><%= lead.priority %> Priority</span>
+
+              <% 
+                const scoreBadge = lead.scoreCategory;
+              %>
+              <span class="badge <%= scoreBadge.class %> px-3 py-2" style="font-size: 0.85rem;" title="Score calculation: <%= lead.score %>">
+                <%= scoreBadge.emoji %> <%= scoreBadge.name %> (Score: <%= lead.score %>)
+              </span>
             </div>
             <% if (lead.storeName) { %>
               <p class="text-muted mt-2 mb-0"><i class="fa-solid fa-store me-1"></i><%= lead.storeName %></p>
@@ -188,6 +195,34 @@
               <i class="fa-solid fa-circle-plus me-1"></i> Log Activity
             </button>
           </form>
+        </div>
+
+        <!-- Follow-up History (Phase 6) -->
+        <div class="card stat-card border p-4 mb-4 mt-0 shadow-sm">
+          <h5 class="fw-bold mb-3 text-dark border-bottom pb-2"><i class="fa-solid fa-calendar-check text-primary me-2"></i>Follow-up Discussion Logs</h5>
+          <div style="max-height: 350px; overflow-y: auto;" class="d-flex flex-column gap-3">
+            <% if (followups.length > 0) { %>
+              <% followups.forEach(function(f) { %>
+                <div class="bg-light p-3 rounded border">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-indigo text-white font-monospace" style="font-size: 0.65rem;"><%= f.nextAction %></span>
+                    <span class="text-muted small" style="font-size: 0.75rem;"><%= new Date(f.followupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
+                  </div>
+                  <p class="text-dark small mb-2" style="white-space: pre-wrap;"><%= f.discussion %></p>
+                  <% if (f.nextFollowupDate) { %>
+                    <div class="text-secondary small font-monospace mb-1" style="font-size: 0.7rem;">
+                      <i class="fa-solid fa-clock-rotate-left me-1"></i>Next Alarm: <%= new Date(f.nextFollowupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </div>
+                  <% } %>
+                  <div class="text-muted small" style="font-size: 0.7rem;">
+                    Logged by: <%= f.createdBy ? f.createdBy.name : 'Unknown' %> (<%= f.createdBy ? f.createdBy.role : 'System' %>)
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <p class="text-muted small mb-0 text-center py-3">No separate follow-up cards logged yet.</p>
+            <% } %>
+          </div>
         </div>
 
         <!-- Activity Timeline -->

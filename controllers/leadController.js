@@ -1,6 +1,7 @@
 const Lead = require('../models/Lead');
 const Category = require('../models/Category');
 const User = require('../models/User');
+const FollowUp = require('../models/FollowUp');
 
 // Get leads list with search, pagination, and advanced filters
 exports.getLeads = async (req, res) => {
@@ -31,7 +32,7 @@ exports.getLeads = async (req, res) => {
     }
 
     // Advanced Filters
-    const { status, priority, category, assignedTo, budgetMin, budgetMax } = req.query;
+    const { status, priority, category, assignedTo, budgetMin, budgetMax, city, country, startDate, endDate } = req.query;
 
     if (status) {
       query.status = status;
@@ -45,6 +46,12 @@ exports.getLeads = async (req, res) => {
     if (req.user.role === 'Admin' && assignedTo) {
       query.assignedTo = assignedTo;
     }
+    if (city) {
+      query.city = { $regex: city, $options: 'i' };
+    }
+    if (country) {
+      query.country = { $regex: country, $options: 'i' };
+    }
     
     // Budget range filter
     if (budgetMin || budgetMax) {
@@ -54,6 +61,19 @@ exports.getLeads = async (req, res) => {
       }
       if (budgetMax) {
         query.budget.$lte = Number(budgetMax);
+      }
+    }
+
+    // Date range filter
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
       }
     }
 
@@ -85,7 +105,11 @@ exports.getLeads = async (req, res) => {
         category: category || '',
         assignedTo: assignedTo || '',
         budgetMin: budgetMin || '',
-        budgetMax: budgetMax || ''
+        budgetMax: budgetMax || '',
+        city: city || '',
+        country: country || '',
+        startDate: startDate || '',
+        endDate: endDate || ''
       }
     });
   } catch (error) {
@@ -203,9 +227,15 @@ exports.getLeadDetails = async (req, res) => {
       return res.redirect('/leads');
     }
 
+    // Fetch separate FollowUp history
+    const followups = await FollowUp.find({ leadId: id })
+      .populate('createdBy', 'name role')
+      .sort({ createdAt: -1 });
+
     res.render('leads/view', {
       title: `${lead.name} | Lead Details`,
-      lead
+      lead,
+      followups
     });
   } catch (error) {
     console.error('Error fetching lead details:', error);
@@ -373,12 +403,23 @@ exports.postAddTimelineEvent = async (req, res) => {
       return res.redirect(`/leads/view/${id}`);
     }
 
-    // Append event
+    // Append event to Lead's timeline
     lead.timeline.push({
       action: action,
       detail: discussion,
       performedBy: req.user._id
     });
+
+    // Create a new separate FollowUp entry
+    const newFollowup = new FollowUp({
+      leadId: lead._id,
+      followupDate: new Date(),
+      discussion: discussion,
+      nextAction: action,
+      nextFollowupDate: nextFollowupDate ? new Date(nextFollowupDate) : undefined,
+      createdBy: req.user._id
+    });
+    await newFollowup.save();
 
     // If next follow up is provided, update it
     if (nextFollowupDate) {
@@ -402,5 +443,89 @@ exports.postAddTimelineEvent = async (req, res) => {
     console.error('Error logging timeline event:', error);
     req.session.error_msg = 'Failed to record activity';
     res.redirect(`/leads/view/${id}`);
+  }
+};
+
+// Get Kanban Board view (Phase 5)
+exports.getKanbanBoard = async (req, res) => {
+  try {
+    let query = {};
+    if (req.user.role !== 'Admin') {
+      query.assignedTo = req.user._id;
+    }
+
+    const leads = await Lead.find(query)
+      .populate('assignedTo', 'name email')
+      .sort({ updatedAt: -1 });
+
+    const statuses = [
+      "New Lead",
+      "Contacted",
+      "Interested",
+      "Demo Scheduled",
+      "Proposal Sent",
+      "Negotiation",
+      "Ready To Buy",
+      "Won",
+      "Lost",
+      "Not Interested",
+      "Follow-up Required"
+    ];
+
+    // Initialize board columns
+    const board = {};
+    statuses.forEach(status => {
+      board[status] = [];
+    });
+
+    leads.forEach(lead => {
+      if (board[lead.status] !== undefined) {
+        board[lead.status].push(lead);
+      } else {
+        board[lead.status] = [lead];
+      }
+    });
+
+    res.render('leads/kanban', {
+      title: 'Leads Kanban Board',
+      board,
+      statuses
+    });
+  } catch (error) {
+    console.error('Error loading Kanban board:', error);
+    req.session.error_msg = 'Failed to load Kanban Board';
+    res.redirect('/leads');
+  }
+};
+
+// Update status via drag-and-drop API
+exports.updateLeadStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const lead = await Lead.findById(id);
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found' });
+    }
+
+    // Authorization check
+    if (req.user.role !== 'Admin' && lead.assignedTo.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const oldStatus = lead.status;
+    lead.status = status;
+    lead.timeline.push({
+      action: 'Status Changed',
+      detail: `Status updated via Kanban drag-and-drop from "${oldStatus}" to "${status}".`,
+      performedBy: req.user._id
+    });
+
+    await lead.save();
+    return res.json({ success: true, lead });
+  } catch (error) {
+    console.error('Error updating status:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

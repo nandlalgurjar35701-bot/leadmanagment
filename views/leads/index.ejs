@@ -9,9 +9,12 @@
         <h1 class="page-title mb-1"><i class="fa-solid fa-address-book text-primary me-2"></i>Leads Pipeline</h1>
         <p class="text-muted">Track customers, cold calling conversions, follow-up dates, and website buying statuses.</p>
       </div>
-      <div>
-        <a href="/leads/add" class="btn btn-primary px-4 py-2.5 rounded-3 shadow-sm">
-          <i class="fa-solid fa-plus me-1"></i> Add New Lead
+      <div class="d-flex gap-2">
+        <a href="/leads/kanban" class="btn btn-outline-indigo px-4 py-2.5 rounded-3 d-inline-flex align-items-center" style="color: #4f46e5; border-color: #4f46e5;">
+          <i class="fa-solid fa-rectangle-list me-2"></i> Kanban Board
+        </a>
+        <a href="/leads/add" class="btn btn-primary px-4 py-2.5 rounded-3 shadow-sm d-inline-flex align-items-center">
+          <i class="fa-solid fa-plus me-1"></i> Add Lead
         </a>
       </div>
     </div>
@@ -32,6 +35,10 @@
             <input type="hidden" name="assignedTo" value="<%= filters.assignedTo %>">
             <input type="hidden" name="budgetMin" value="<%= filters.budgetMin %>">
             <input type="hidden" name="budgetMax" value="<%= filters.budgetMax %>">
+            <input type="hidden" name="city" value="<%= filters.city %>">
+            <input type="hidden" name="country" value="<%= filters.country %>">
+            <input type="hidden" name="startDate" value="<%= filters.startDate %>">
+            <input type="hidden" name="endDate" value="<%= filters.endDate %>">
 
             <% if (searchQuery) { %>
               <a href="/leads?status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>" class="btn btn-sm btn-link position-absolute end-0 top-50 translate-middle-y me-3 text-secondary text-decoration-none">
@@ -52,7 +59,7 @@
     </div>
 
     <!-- Collapsible Advanced Filters Card -->
-    <div class="collapse <%= (filters.status || filters.priority || filters.category || filters.assignedTo || filters.budgetMin || filters.budgetMax) ? 'show' : '' %> mb-4" id="filterPanel">
+    <div class="collapse <%= (filters.status || filters.priority || filters.category || filters.assignedTo || filters.budgetMin || filters.budgetMax || filters.city || filters.country || filters.startDate || filters.endDate) ? 'show' : '' %> mb-4" id="filterPanel">
       <div class="card stat-card border p-4">
         <h6 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-sliders text-secondary me-2"></i>Filter Leads</h6>
         <form action="/leads" method="GET">
@@ -130,8 +137,32 @@
               <input type="number" name="budgetMax" id="filter-budget-max" class="form-control" placeholder="E.g., 100000" value="<%= filters.budgetMax %>">
             </div>
 
+            <!-- City Filter -->
+            <div class="col-md-3">
+              <label for="filter-city" class="form-label small fw-medium">City</label>
+              <input type="text" name="city" id="filter-city" class="form-control" placeholder="E.g., Mumbai" value="<%= filters.city %>">
+            </div>
+
+            <!-- Country Filter -->
+            <div class="col-md-3">
+              <label for="filter-country" class="form-label small fw-medium">Country</label>
+              <input type="text" name="country" id="filter-country" class="form-control" placeholder="E.g., India" value="<%= filters.country %>">
+            </div>
+
+            <!-- Start Date Filter -->
+            <div class="col-md-3">
+              <label for="filter-start-date" class="form-label small fw-medium">Created From</label>
+              <input type="date" name="startDate" id="filter-start-date" class="form-control" value="<%= filters.startDate %>">
+            </div>
+
+            <!-- End Date Filter -->
+            <div class="col-md-3">
+              <label for="filter-end-date" class="form-label small fw-medium">Created To</label>
+              <input type="date" name="endDate" id="filter-end-date" class="form-control" value="<%= filters.endDate %>">
+            </div>
+
             <!-- Filter Buttons -->
-            <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
+            <div class="col-md-6 d-flex align-items-end justify-content-end gap-2 mt-2 ms-auto">
               <a href="/leads" class="btn btn-light px-4 py-2 text-dark rounded-3">Reset Filters</a>
               <button type="submit" class="btn btn-primary px-4 py-2 rounded-3"><i class="fa-solid fa-circle-check me-1"></i>Apply Filters</button>
             </div>
@@ -167,7 +198,15 @@
                   <!-- Customer & Store -->
                   <td>
                     <div>
-                      <strong class="text-dark"><%= lead.name %></strong>
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <strong class="text-dark"><%= lead.name %></strong>
+                        <% 
+                          const badge = lead.scoreCategory;
+                        %>
+                        <span class="badge <%= badge.class %>" style="font-size: 0.65rem;" title="Lead Score: <%= lead.score %>">
+                          <%= badge.emoji %> <%= badge.name %>
+                        </span>
+                      </div>
                       <% if (lead.storeName) { %>
                         <span class="d-block small text-muted"><i class="fa-solid fa-store me-1 text-secondary"></i><%= lead.storeName %></span>
                       <% } %>
@@ -296,7 +335,7 @@
               
               <!-- Previous Button -->
               <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&page=<%= currentPage - 1 %>">
+                <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&city=<%= filters.city %>&country=<%= filters.country %>&startDate=<%= filters.startDate %>&endDate=<%= filters.endDate %>&page=<%= currentPage - 1 %>">
                   <i class="fa-solid fa-chevron-left small"></i> Prev
                 </a>
               </li>
@@ -304,13 +343,13 @@
               <!-- Page Numbers Loop -->
               <% for(let i = 1; i <= totalPages; i++) { %>
                 <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                  <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&page=<%= i %>"><%= i %></a>
+                  <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&city=<%= filters.city %>&country=<%= filters.country %>&startDate=<%= filters.startDate %>&endDate=<%= filters.endDate %>&page=<%= i %>"><%= i %></a>
                 </li>
               <% } %>
 
               <!-- Next Button -->
               <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&page=<%= currentPage + 1 %>">
+                <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&city=<%= filters.city %>&country=<%= filters.country %>&startDate=<%= filters.startDate %>&endDate=<%= filters.endDate %>&page=<%= currentPage + 1 %>">
                   Next <i class="fa-solid fa-chevron-right small"></i>
                 </a>
               </li>

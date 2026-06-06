@@ -295,3 +295,33 @@ footer a {
 footer a:hover {
   color: #fff;
 }
+
+/* Additional Custom CRM Styles */
+.btn-outline-indigo {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  transition: all 0.2s ease-in-out;
+}
+.btn-outline-indigo:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+.bg-indigo {
+  background-color: var(--primary-color) !important;
+}
+.text-indigo {
+  color: var(--primary-color) !important;
+}
+.animate-bounce {
+  animation: bounce 2s infinite;
+}
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}

@@ -9,6 +9,9 @@ router.use(protect);
 // Lead CRUD routes
 router.get('/', leadController.getLeads);
 
+router.get('/kanban', leadController.getKanbanBoard);
+router.post('/update-status/:id', leadController.updateLeadStatus);
+
 router.get('/add', leadController.getAddLead);
 router.post('/add', leadController.postAddLead);
 

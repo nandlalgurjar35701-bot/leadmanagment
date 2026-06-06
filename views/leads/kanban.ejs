@@ -1,0 +1,187 @@
+<%- include('../layouts/header') %>
+
+<div class="dashboard-container">
+  <div class="container-fluid px-4">
+
+    <!-- Header Actions -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+      <div>
+        <h1 class="page-title mb-1"><i class="fa-solid fa-rectangle-list text-primary me-2"></i>Leads Kanban Board</h1>
+        <p class="text-muted">Drag and drop leads between stages to automatically update database status.</p>
+      </div>
+      <div>
+        <a href="/leads" class="btn btn-outline-secondary px-4 py-2.5 rounded-3">
+          <i class="fa-solid fa-table-list me-1"></i> Switch to Pipeline Table
+        </a>
+      </div>
+    </div>
+
+    <!-- Kanban Wrapper -->
+    <div class="kanban-wrapper d-flex flex-row align-items-stretch gap-3 pb-4" style="overflow-x: auto; min-height: 70vh;">
+      <% statuses.forEach(function(status) { %>
+        <div class="kanban-column flex-shrink-0 d-flex flex-column rounded-3 border bg-light p-3" 
+             style="width: 310px; min-height: 500px;"
+             ondragover="allowDrop(event)" 
+             ondrop="drop(event, '<%= status %>')">
+          
+          <!-- Column Header -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center">
+              <%= status %>
+              <span class="badge bg-secondary ms-2 small" style="font-size: 0.7rem;"><%= board[status].length %></span>
+            </h6>
+          </div>
+
+          <!-- Cards List -->
+          <div class="kanban-cards-container d-flex flex-column gap-2 flex-grow-1" style="overflow-y: auto;">
+            <% if (board[status].length > 0) { %>
+              <% board[status].forEach(function(lead) { %>
+                <!-- Kanban Card -->
+                <div class="card kanban-card shadow-sm border p-3 rounded-3 bg-white pointer" 
+                     id="lead-<%= lead._id %>"
+                     draggable="true" 
+                     ondragstart="drag(event)" 
+                     onclick="window.location.href='/leads/view/<%= lead._id %>'">
+                  
+                  <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <strong class="text-dark small card-lead-name"><%= lead.name %></strong>
+                    <% 
+                      let scoreBadge = lead.scoreCategory;
+                    %>
+                    <span class="badge <%= scoreBadge.class %>" style="font-size: 0.65rem;" title="Lead Score: <%= lead.score %>">
+                      <%= scoreBadge.emoji %> <%= scoreBadge.name.split(' ')[0] %>
+                    </span>
+                  </div>
+
+                  <% if (lead.storeName) { %>
+                    <div class="small text-muted mb-2"><i class="fa-solid fa-store text-secondary me-1"></i><%= lead.storeName %></div>
+                  <% } %>
+
+                  <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                    <span class="text-success small fw-bold">₹<%= lead.budget.toLocaleString('en-IN') %></span>
+                    <% 
+                      let priorityClass = 'badge-secondary';
+                      if (lead.priority === 'High') priorityClass = 'bg-danger text-white';
+                      else if (lead.priority === 'Medium') priorityClass = 'bg-warning text-dark';
+                      else priorityClass = 'bg-light text-dark border';
+                    %>
+                    <span class="badge rounded-pill <%= priorityClass %>" style="font-size: 0.6rem;"><%= lead.priority %></span>
+                  </div>
+
+                  <div class="mt-2 text-muted font-monospace" style="font-size: 0.65rem;">
+                    Owner: <%= lead.assignedTo ? lead.assignedTo.name : 'Unassigned' %>
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="text-center text-muted py-4 small opacity-50 empty-lane-placeholder">Drag cards here</div>
+            <% } %>
+          </div>
+
+        </div>
+      <% }); %>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  function drag(ev) {
+    ev.dataTransfer.setData("text/plain", ev.target.id);
+    ev.target.classList.add("dragging");
+  }
+
+  document.addEventListener("dragend", function(event) {
+    if (event.target.classList.contains("kanban-card")) {
+      event.target.classList.remove("dragging");
+    }
+  });
+
+  function drop(ev, targetStatus) {
+    ev.preventDefault();
+    const data = ev.dataTransfer.getData("text/plain");
+    const card = document.getElementById(data);
+    
+    // Find target column/lane container
+    let targetCol = ev.target;
+    while (targetCol && !targetCol.classList.contains("kanban-column")) {
+      targetCol = targetCol.parentElement;
+    }
+    
+    if (!targetCol || !card) return;
+
+    const leadId = data.replace("lead-", "");
+    const cardsContainer = targetCol.querySelector(".kanban-cards-container");
+    const placeholder = cardsContainer.querySelector(".empty-lane-placeholder");
+
+    // Pre-emptively append to UI for instant feel
+    if (placeholder) {
+      placeholder.style.display = "none";
+    }
+    cardsContainer.appendChild(card);
+
+    // Call update status AJAX
+    fetch(`/leads/update-status/${leadId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ status: targetStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Optional success visual effect or reload values
+        console.log("Status updated successfully:", data.lead.status);
+        // Refresh counts
+        location.reload();
+      } else {
+        alert("Failed to update lead status: " + data.message);
+        location.reload();
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Network error: Failed to update status");
+      location.reload();
+    });
+  }
+</script>
+
+<style>
+  .kanban-wrapper::-webkit-scrollbar {
+    height: 8px;
+  }
+  .kanban-wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+  }
+  .kanban-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+  .kanban-column {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+  .kanban-card {
+    transition: all 0.2s ease;
+    cursor: grab;
+  }
+  .kanban-card:active {
+    cursor: grabbing;
+  }
+  .kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow) !important;
+  }
+  .dragging {
+    opacity: 0.4;
+    border: 2px dashed #4f46e5 !important;
+  }
+</style>
+
+<%- include('../layouts/footer') %>

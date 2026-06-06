@@ -114,7 +114,41 @@ const leadSchema = new mongoose.Schema({
     }
   ]
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+leadSchema.virtual('score').get(function() {
+  let pts = 0;
+  if (this.budget > 100000) {
+    pts += 40;
+  } else if (this.budget > 50000) {
+    pts += 20;
+  }
+  
+  if (this.status === 'Interested') {
+    pts += 20;
+  } else if (this.status === 'Demo Scheduled') {
+    pts += 20;
+  } else if (this.status === 'Proposal Sent') {
+    pts += 30;
+  } else if (this.status === 'Ready To Buy') {
+    pts += 50;
+  }
+  
+  return pts;
+});
+
+leadSchema.virtual('scoreCategory').get(function() {
+  const s = this.score;
+  if (s >= 70) {
+    return { name: 'Hot Lead', emoji: '🔥', class: 'bg-danger text-white' };
+  }
+  if (s >= 30) {
+    return { name: 'Warm Lead', emoji: '🟡', class: 'bg-warning text-dark' };
+  }
+  return { name: 'Cold Lead', emoji: '❄️', class: 'bg-info bg-opacity-10 text-info border border-info' };
 });
 
 module.exports = mongoose.model('Lead', leadSchema);
