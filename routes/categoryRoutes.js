@@ -12,4 +12,8 @@ router.get('/', categoryController.getCategories);
 router.post('/', categoryController.createCategory);
 router.post('/delete/:id', categoryController.deleteCategory);
 
+// URL management routes (Admin only)
+router.post('/add-url/:id', categoryController.addCategoryUrl);
+router.post('/delete-url/:id/:urlId', categoryController.deleteCategoryUrl);
+
 module.exports = router;

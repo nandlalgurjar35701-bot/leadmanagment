@@ -232,10 +232,14 @@ exports.getLeadDetails = async (req, res) => {
       .populate('createdBy', 'name role')
       .sort({ createdAt: -1 });
 
+    // Fetch category configurations to retrieve reference website demo links
+    const categoriesData = await Category.find({ name: { $in: lead.categories } });
+
     res.render('leads/view', {
       title: `${lead.name} | Lead Details`,
       lead,
-      followups
+      followups,
+      categoriesData
     });
   } catch (error) {
     console.error('Error fetching lead details:', error);

@@ -153,9 +153,49 @@
         </div>
 
         <!-- Initial Notes -->
-        <div class="card stat-card border p-4 mt-0 shadow-sm">
+        <div class="card stat-card border p-4 mb-4 mt-0 shadow-sm">
           <h5 class="fw-bold mb-3 text-dark border-bottom pb-2"><i class="fa-solid fa-note-sticky text-primary me-2"></i>Initial Requirements / Discussion Notes</h5>
           <p class="text-dark mb-0 bg-light p-3 rounded border" style="white-space: pre-wrap; font-size: 0.95rem;"><%= lead.notes ? lead.notes : 'No initial discussion notes logged.' %></p>
+        </div>
+
+        <!-- Portfolio Website Demos for Pitching -->
+        <div class="card stat-card border p-4 mt-0 shadow-sm">
+          <h5 class="fw-bold mb-3 text-dark border-bottom pb-2"><i class="fa-solid fa-laptop-code text-primary me-2"></i>Portfolio Demos / Reference Websites</h5>
+          <div class="row g-3">
+            <% 
+              let hasDemoUrls = false; 
+              if (typeof categoriesData !== 'undefined' && categoriesData.length > 0) {
+                categoriesData.forEach(function(catDoc) { 
+                  if (catDoc.urls && catDoc.urls.length > 0) {
+                    hasDemoUrls = true;
+            %>
+                    <div class="col-12 text-start">
+                      <strong class="text-indigo d-block mb-2"><%= catDoc.name %> Category Demos:</strong>
+                      <div class="d-flex flex-column gap-2">
+                        <% catDoc.urls.forEach(function(uObj) { %>
+                          <div class="d-flex justify-content-between align-items-center bg-light p-2.5 rounded border">
+                            <div class="text-start">
+                              <strong class="text-dark small"><%= uObj.title || 'Demo Website' %></strong>
+                              <span class="d-block text-muted font-monospace small" style="font-size: 0.75rem;"><%= uObj.link %></span>
+                            </div>
+                            <a href="<%= uObj.link %>" target="_blank" class="btn btn-sm btn-outline-primary px-3 rounded-2">
+                              <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Link
+                            </a>
+                          </div>
+                        <% }); %>
+                      </div>
+                    </div>
+            <% 
+                  }
+                }); 
+              }
+              if (!hasDemoUrls) {
+            %>
+              <div class="col-12">
+                <span class="text-muted small">No reference website demos configured for these categories yet.</span>
+              </div>
+            <% } %>
+          </div>
         </div>
 
       </div>

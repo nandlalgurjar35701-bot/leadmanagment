@@ -6,7 +6,13 @@ const categorySchema = new mongoose.Schema({
     required: [true, 'Category name is required'],
     unique: true,
     trim: true
-  }
+  },
+  urls: [
+    {
+      title: { type: String, trim: true },
+      link: { type: String, required: [true, 'Demo link is required'], trim: true }
+    }
+  ]
 }, {
   timestamps: true
 });

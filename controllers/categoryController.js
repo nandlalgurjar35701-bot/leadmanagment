@@ -65,3 +65,59 @@ exports.deleteCategory = async (req, res) => {
     res.redirect('/admin/categories');
   }
 };
+
+// Add a demo/reference URL to a category (Admin Privilege)
+exports.addCategoryUrl = async (req, res) => {
+  const { id } = req.params;
+  const { title, link } = req.body;
+
+  try {
+    if (!link || !link.trim()) {
+      req.session.error_msg = 'URL link is required';
+      return res.redirect('/admin/categories');
+    }
+
+    const category = await Category.findById(id);
+    if (!category) {
+      req.session.error_msg = 'Category not found';
+      return res.redirect('/admin/categories');
+    }
+
+    category.urls.push({
+      title: title ? title.trim() : 'Demo Website',
+      link: link.trim()
+    });
+
+    await category.save();
+    req.session.success_msg = `Reference link added to "${category.name}" successfully!`;
+    res.redirect('/admin/categories');
+  } catch (error) {
+    console.error('Error adding category URL:', error);
+    req.session.error_msg = error.message || 'Failed to add demo URL';
+    res.redirect('/admin/categories');
+  }
+};
+
+// Delete a demo/reference URL from a category (Admin Privilege)
+exports.deleteCategoryUrl = async (req, res) => {
+  const { id, urlId } = req.params;
+
+  try {
+    const category = await Category.findById(id);
+    if (!category) {
+      req.session.error_msg = 'Category not found';
+      return res.redirect('/admin/categories');
+    }
+
+    // Filter out the URL
+    category.urls = category.urls.filter(u => u._id.toString() !== urlId);
+    await category.save();
+
+    req.session.success_msg = 'Reference link removed successfully.';
+    res.redirect('/admin/categories');
+  } catch (error) {
+    console.error('Error deleting category URL:', error);
+    req.session.error_msg = 'Failed to delete demo URL';
+    res.redirect('/admin/categories');
+  }
+};
