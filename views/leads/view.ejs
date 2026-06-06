@@ -1,0 +1,234 @@
+<%- include('../layouts/header') %>
+
+<div class="dashboard-container">
+  <div class="container">
+    
+    <!-- Navigation Back Link -->
+    <div class="mb-4">
+      <a href="/leads" class="btn btn-sm btn-link text-secondary text-decoration-none ps-0">
+        <i class="fa-solid fa-arrow-left-long me-1"></i> Back to Pipeline
+      </a>
+    </div>
+
+    <!-- Lead Profile Header Card -->
+    <div class="card stat-card border mb-4 shadow-sm">
+      <div class="card-body p-4">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <h2 class="fw-bold mb-0 text-dark"><%= lead.name %></h2>
+              <% 
+                let statusClass = 'bg-secondary';
+                if (lead.status === 'New Lead') statusClass = 'bg-info bg-opacity-10 text-info border-info border';
+                else if (lead.status === 'Contacted') statusClass = 'bg-light text-dark border';
+                else if (lead.status === 'Interested') statusClass = 'bg-primary bg-opacity-10 text-primary border border-primary';
+                else if (lead.status === 'Demo Scheduled') statusClass = 'bg-warning bg-opacity-10 text-warning border border-warning';
+                else if (lead.status === 'Proposal Sent') statusClass = 'bg-indigo text-white';
+                else if (lead.status === 'Won') statusClass = 'bg-success bg-opacity-10 text-success border border-success';
+                else if (lead.status === 'Lost' || lead.status === 'Not Interested') statusClass = 'bg-danger bg-opacity-10 text-danger border border-danger';
+                else if (lead.status === 'Follow-up Required') statusClass = 'bg-warning text-dark border border-warning';
+              %>
+              <span class="badge badge-custom <%= statusClass %> px-3 py-2" style="font-size: 0.85rem;"><%= lead.status %></span>
+              
+              <% 
+                let priorityClass = 'badge-secondary';
+                if (lead.priority === 'High') priorityClass = 'bg-danger text-white';
+                else if (lead.priority === 'Medium') priorityClass = 'bg-warning text-dark';
+                else priorityClass = 'bg-light text-dark border';
+              %>
+              <span class="badge rounded-pill <%= priorityClass %> px-3 py-1.5" style="font-size: 0.75rem;"><%= lead.priority %> Priority</span>
+            </div>
+            <% if (lead.storeName) { %>
+              <p class="text-muted mt-2 mb-0"><i class="fa-solid fa-store me-1"></i><%= lead.storeName %></p>
+            <% } %>
+          </div>
+          <div class="col-md-4 text-md-end mt-3 mt-md-0 d-flex flex-column align-items-md-end gap-2">
+            <div>
+              <span class="text-muted small">Budget:</span>
+              <h3 class="fw-bold text-success mb-0">₹<%= lead.budget.toLocaleString('en-IN') %></h3>
+            </div>
+            <div>
+              <a href="/leads/edit/<%= lead._id %>" class="btn btn-outline-secondary px-3 btn-sm rounded-2">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Edit details
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      
+      <!-- Left Column: Lead Details Cards -->
+      <div class="col-lg-7">
+        
+        <!-- Contact & Location Card -->
+        <div class="card stat-card border p-4 mb-4 mt-0 shadow-sm">
+          <h5 class="fw-bold mb-4 text-dark border-bottom pb-2"><i class="fa-solid fa-address-book text-primary me-2"></i>Contact Details</h5>
+          
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <span class="text-muted small d-block">Mobile Numbers:</span>
+              <ul class="list-unstyled mb-0 mt-1">
+                <% lead.mobileNumbers.forEach(function(obj) { %>
+                  <li>
+                    <strong class="text-dark"><i class="fa-solid fa-phone text-secondary small me-1"></i><%= obj.number %></strong>
+                    <a href="tel:<%= obj.number %>" class="btn btn-link btn-sm p-0 ms-2 text-decoration-none small text-indigo"><i class="fa-solid fa-square-phone"></i> Call</a>
+                  </li>
+                <% }); %>
+              </ul>
+            </div>
+            
+            <div class="col-sm-6">
+              <span class="text-muted small d-block">Email Address:</span>
+              <strong class="text-dark d-block mt-1">
+                <%= lead.email ? lead.email : 'Not Provided' %>
+              </strong>
+            </div>
+
+            <div class="col-sm-6">
+              <span class="text-muted small d-block">Street Address:</span>
+              <span class="text-dark d-block mt-1"><%= lead.address ? lead.address : 'Not Provided' %></span>
+            </div>
+
+            <div class="col-sm-6">
+              <span class="text-muted small d-block">City & Country:</span>
+              <span class="text-dark d-block mt-1">
+                <%= lead.city ? lead.city : 'Not Provided' %> <%= lead.country ? `(${lead.country})` : '' %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deal Metadata Card -->
+        <div class="card stat-card border p-4 mb-4 mt-0 shadow-sm">
+          <h5 class="fw-bold mb-4 text-dark border-bottom pb-2"><i class="fa-solid fa-circle-info text-primary me-2"></i>Deal Metadata</h5>
+          
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <span class="text-muted small d-block">Lead Source:</span>
+              <span class="badge bg-light text-dark border px-3 py-1.5 mt-1 font-monospace" style="font-size: 0.75rem;"><%= lead.leadSource %></span>
+            </div>
+
+            <div class="col-sm-6">
+              <span class="text-muted small d-block">Assigned Agent (Owner):</span>
+              <strong class="text-dark d-block mt-1">
+                <i class="fa-solid fa-user-tie text-secondary me-1"></i><%= lead.assignedTo ? lead.assignedTo.name : 'Unassigned' %>
+              </strong>
+            </div>
+
+            <div class="col-sm-6">
+              <span class="text-muted small d-block">Created By:</span>
+              <span class="text-dark d-block mt-1"><%= lead.createdBy ? lead.createdBy.name : 'System' %></span>
+            </div>
+
+            <div class="col-sm-6">
+              <span class="text-muted small d-block">Expected Closing Date:</span>
+              <strong class="text-dark d-block mt-1">
+                <i class="fa-solid fa-calendar text-secondary me-1"></i>
+                <%= lead.expectedClosingDate ? new Date(lead.expectedClosingDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Not set' %>
+              </strong>
+            </div>
+
+            <div class="col-12">
+              <span class="text-muted small d-block mb-1">Target Website Categories:</span>
+              <% if (lead.categories.length > 0) { %>
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                  <% lead.categories.forEach(function(cat) { %>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle small px-2.5 py-1.5"><%= cat %></span>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <span class="text-muted small">No categories selected</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Initial Notes -->
+        <div class="card stat-card border p-4 mt-0 shadow-sm">
+          <h5 class="fw-bold mb-3 text-dark border-bottom pb-2"><i class="fa-solid fa-note-sticky text-primary me-2"></i>Initial Requirements / Discussion Notes</h5>
+          <p class="text-dark mb-0 bg-light p-3 rounded border" style="white-space: pre-wrap; font-size: 0.95rem;"><%= lead.notes ? lead.notes : 'No initial discussion notes logged.' %></p>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Follow-up & Activity Timeline -->
+      <div class="col-lg-5">
+        
+        <!-- Log Action Form -->
+        <div class="card stat-card border p-4 mb-4 mt-0 shadow-sm">
+          <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-comment-medical text-primary me-2"></i>Log Follow-up / Action</h5>
+          <form action="/leads/timeline/<%= lead._id %>" method="POST">
+            
+            <div class="mb-3">
+              <label for="action" class="form-label small fw-medium">Action Performed</label>
+              <select name="action" id="action" class="form-select" required>
+                <option value="Called Client" selected>Called Client (Cold Call / Follow-up)</option>
+                <option value="Sent Proposal">Sent Proposal / Pricing</option>
+                <option value="Demo Scheduled">Scheduled Website Demo</option>
+                <option value="Negotiated Pricing">Negotiated Price Details</option>
+                <option value="Closed Deal">Closed Deal (Won / Lost)</option>
+                <option value="Note Added">General Discussion / Note</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="discussion" class="form-label small fw-medium">Discussion Summary</label>
+              <textarea name="discussion" id="discussion" rows="3" class="form-control" placeholder="What did the customer say? What are the next steps?" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="nextFollowupDate" class="form-label small fw-medium">Schedule Next Follow-up (Optional)</label>
+              <input type="datetime-local" name="nextFollowupDate" id="nextFollowupDate" class="form-control">
+              <div class="form-text small">This will update the lead's next follow-up alarm date.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2.5 rounded-3">
+              <i class="fa-solid fa-circle-plus me-1"></i> Log Activity
+            </button>
+          </form>
+        </div>
+
+        <!-- Activity Timeline -->
+        <div class="card stat-card border p-4 mt-0 shadow-sm">
+          <h5 class="fw-bold mb-4 text-dark border-bottom pb-2"><i class="fa-solid fa-timeline text-primary me-2"></i>Lead Activity Timeline</h5>
+          
+          <div class="position-relative ps-3" style="border-left: 2px solid #e2e8f0; max-height: 400px; overflow-y: auto;">
+            <% if (lead.timeline.length > 0) { %>
+              <% 
+                // Sort timeline newest first
+                const sortedTimeline = [...lead.timeline].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+              %>
+              <% sortedTimeline.forEach(function(event) { %>
+                <div class="position-relative mb-4">
+                  <!-- Bullet marker -->
+                  <div class="position-absolute bg-primary rounded-circle" style="width: 12px; height: 12px; left: -20px; top: 4px; border: 2px solid #fff;"></div>
+                  
+                  <div class="d-flex justify-content-between align-items-center">
+                    <strong class="text-dark small"><%= event.action %></strong>
+                    <span class="text-muted small" style="font-size: 0.75rem;"><%= new Date(event.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
+                  </div>
+                  
+                  <p class="text-muted mb-1 small mt-1" style="white-space: pre-wrap;"><%= event.detail %></p>
+                  
+                  <div class="text-muted small font-monospace" style="font-size: 0.7rem;">
+                    By: <%= event.performedBy ? event.performedBy.name : 'System' %> 
+                    <span class="badge text-dark bg-light font-sans-serif border small" style="font-size: 0.6rem;"><%= event.performedBy ? event.performedBy.role : 'System' %></span>
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <p class="text-muted small mb-0">No activities logged yet.</p>
+            <% } %>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

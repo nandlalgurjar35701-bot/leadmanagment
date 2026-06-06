@@ -1,0 +1,160 @@
+<%- include('../layouts/header') %>
+
+<div class="dashboard-container">
+  <div class="container">
+    
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        
+        <div class="mb-4">
+          <a href="/leads" class="btn btn-sm btn-link text-secondary text-decoration-none ps-0">
+            <i class="fa-solid fa-arrow-left-long me-1"></i> Back to Pipeline
+          </a>
+          <h1 class="page-title mt-2 mb-1">Add New Lead</h1>
+          <p class="text-muted">Enter cold calling details to log a prospective website-buying client.</p>
+        </div>
+
+        <div class="card stat-card border shadow-sm">
+          <div class="card-header card-header-gradient p-3">
+            <h5 class="mb-0"><i class="fa-solid fa-square-plus me-2"></i>Lead Information Form</h5>
+          </div>
+          <div class="card-body p-4 p-md-5">
+            <form action="/leads/add" method="POST">
+              
+              <!-- Section 1: Customer Info -->
+              <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-address-card me-2"></i>Contact Details</h5>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <label for="name" class="form-label fw-semibold">Customer Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control py-2.5" id="name" name="name" placeholder="E.g., Ramesh Kumar" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="email" class="form-label fw-semibold">Email Address</label>
+                  <input type="email" class="form-control py-2.5" id="email" name="email" placeholder="E.g., ramesh@gmail.com">
+                </div>
+                <div class="col-md-6">
+                  <label for="mobileNumbers" class="form-label fw-semibold">Mobile Numbers <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control py-2.5" id="mobileNumbers" name="mobileNumbers" placeholder="E.g., 9876543210, 9123456789 (comma separated for multiple)" required>
+                  <div class="form-text small">You can enter multiple numbers separated by commas.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="storeName" class="form-label fw-semibold">Store / Business Name</label>
+                  <input type="text" class="form-control py-2.5" id="storeName" name="storeName" placeholder="E.g., Ramesh General Store">
+                </div>
+              </div>
+
+              <!-- Section 2: Address Info -->
+              <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-map-location-dot me-2"></i>Location</h5>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <label for="address" class="form-label fw-semibold">Street Address</label>
+                  <input type="text" class="form-control py-2.5" id="address" name="address" placeholder="E.g., 12, MG Road">
+                </div>
+                <div class="col-md-3">
+                  <label for="city" class="form-label fw-semibold">City</label>
+                  <input type="text" class="form-control py-2.5" id="city" name="city" placeholder="E.g., Bangalore">
+                </div>
+                <div class="col-md-3">
+                  <label for="country" class="form-label fw-semibold">Country</label>
+                  <input type="text" class="form-control py-2.5" id="country" name="country" placeholder="India" value="India">
+                </div>
+              </div>
+
+              <!-- Section 3: Project and Budget Info -->
+              <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-briefcase me-2"></i>Deal Details</h5>
+              <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                  <label for="budget" class="form-label fw-semibold">Website Budget (₹)</label>
+                  <input type="number" class="form-control py-2.5" id="budget" name="budget" placeholder="E.g., 35000" min="0" value="0">
+                </div>
+                <div class="col-md-4">
+                  <label for="leadSource" class="form-label fw-semibold">Lead Source</label>
+                  <select class="form-select py-2.5" id="leadSource" name="leadSource">
+                    <option value="Cold Calling" selected>Cold Calling</option>
+                    <option value="Facebook">Facebook</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Reference">Reference</option>
+                    <option value="Website">Website</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="priority" class="form-label fw-semibold">Lead Priority</label>
+                  <select class="form-select py-2.5" id="priority" name="priority">
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Section 4: Assign User (Admin Only) -->
+              <% if (user.role === 'Admin') { %>
+                <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-user-check me-2"></i>Staff Assignment</h5>
+                <div class="row mb-4">
+                  <div class="col-md-6">
+                    <label for="assignedTo" class="form-label fw-semibold">Assign Lead To Agent</label>
+                    <select class="form-select py-2.5" id="assignedTo" name="assignedTo">
+                      <option value="">Choose Agent...</option>
+                      <% agents.forEach(function(agent) { %>
+                        <option value="<%= agent._id %>" <%= agent._id.toString() === user._id.toString() ? 'selected' : '' %>><%= agent.name %> (<%= agent.role %>)</option>
+                      <% }); %>
+                    </select>
+                  </div>
+                </div>
+              <% } %>
+
+              <!-- Section 5: Website Categories checkboxes grid -->
+              <h5 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-tags me-2"></i>Website Categories</h5>
+              <p class="text-muted small mb-3">Select the target categories for the website (select all that apply):</p>
+              <div class="row g-2 mb-4 bg-light p-3 rounded border" style="max-height: 250px; overflow-y: auto;">
+                <% categories.forEach(function(cat) { %>
+                  <div class="col-md-4 col-sm-6">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="categories" value="<%= cat.name %>" id="cat-<%= cat._id %>">
+                      <label class="form-check-label text-dark fw-medium small" for="cat-<%= cat._id %>">
+                        <%= cat.name %>
+                      </label>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+
+              <!-- Section 6: Next Actions -->
+              <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-calendar-days me-2"></i>Next Steps</h5>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <label for="nextFollowupDate" class="form-label fw-semibold">Next Follow-up Date</label>
+                  <input type="datetime-local" class="form-control py-2.5" id="nextFollowupDate" name="nextFollowupDate">
+                </div>
+                <div class="col-md-6">
+                  <label for="expectedClosingDate" class="form-label fw-semibold">Expected Closing Date</label>
+                  <input type="date" class="form-control py-2.5" id="expectedClosingDate" name="expectedClosingDate">
+                </div>
+              </div>
+
+              <!-- Section 7: Notes -->
+              <div class="mb-4">
+                <label for="notes" class="form-label fw-semibold">Cold Call Discussion Notes</label>
+                <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Detail the client requirements, what website they need, their pain points, and outcome of the cold call..."></textarea>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                <a href="/leads" class="btn btn-outline-secondary px-4 py-2.5 rounded-3">Cancel</a>
+                <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-3">
+                  <i class="fa-solid fa-circle-check me-1"></i> Save Lead
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

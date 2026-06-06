@@ -28,7 +28,13 @@
             <li class="nav-item">
               <a class="nav-link" href="/"><i class="fa-solid fa-chart-pie me-1"></i> Dashboard</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/leads"><i class="fa-solid fa-address-book me-1"></i> Leads Pipeline</a>
+            </li>
             <% if (user.role === 'Admin') { %>
+              <li class="nav-item">
+                <a class="nav-link" href="/admin/categories"><i class="fa-solid fa-tags me-1"></i> Manage Categories</a>
+              </li>
               <li class="nav-item">
                 <a class="nav-link" href="/admin/users"><i class="fa-solid fa-users-gear me-1"></i> Manage Users</a>
               </li>

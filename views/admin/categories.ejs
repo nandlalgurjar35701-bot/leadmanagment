@@ -1,0 +1,83 @@
+<%- include('../layouts/header') %>
+
+<div class="dashboard-container">
+  <div class="container">
+    
+    <div class="row align-items-center mb-5">
+      <div class="col-md-8">
+        <h1 class="page-title mb-1">Website Categories</h1>
+        <p class="text-muted">Manage the categories for target websites to be pitched during cold calling.</p>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Add Category Form Card -->
+      <div class="col-md-4">
+        <div class="card stat-card border">
+          <div class="card-header card-header-gradient p-3">
+            <h5 class="mb-0"><i class="fa-solid fa-plus me-2"></i>Add New Category</h5>
+          </div>
+          <div class="card-body p-4">
+            <form action="/admin/categories" method="POST">
+              <div class="mb-3">
+                <label for="category-name" class="form-label fw-medium text-dark">Category Name</label>
+                <input type="text" class="form-control py-2.5" id="category-name" name="name" placeholder="E.g., Boutique, Dental Clinic" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2.5">
+                <i class="fa-solid fa-circle-plus me-1"></i> Add Category
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories Table List -->
+      <div class="col-md-8">
+        <div class="table-container shadow-sm border mt-0">
+          <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-list text-primary me-2"></i>Active Categories</h5>
+          <div class="table-responsive">
+            <table class="table table-custom align-middle">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 80px;">#</th>
+                  <th scope="col">Category Name</th>
+                  <th scope="col" class="text-center" style="width: 150px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (categories.length > 0) { %>
+                  <% categories.forEach(function(cat, index) { %>
+                    <tr>
+                      <td class="text-muted small"><%= index + 1 %></td>
+                      <td><strong class="text-dark"><%= cat.name %></strong></td>
+                      <td class="text-center">
+                        <form action="/admin/categories/delete/<%= cat._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete the category \'<%= cat.name %>\'?');" class="d-inline">
+                          <button type="submit" class="btn btn-sm btn-outline-danger px-3 rounded-2">
+                            <i class="fa-solid fa-trash-can me-1"></i> Delete
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="3" class="text-center py-5">
+                      <div class="text-muted mb-2">
+                        <i class="fa-solid fa-tags fa-2x"></i>
+                      </div>
+                      <h6 class="fw-bold">No Categories Found</h6>
+                      <p class="text-muted small mb-0">The category collection is empty.</p>
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

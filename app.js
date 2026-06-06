@@ -10,6 +10,7 @@ const app = express();
 // Connect to Database
 connectDB().then(() => {
   seedAdminUser();
+  seedCategories();
 });
 
 // Middleware
@@ -48,6 +49,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', require('./routes/indexRoutes'));
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
+app.use('/admin/categories', require('./routes/categoryRoutes'));
+app.use('/leads', require('./routes/leadRoutes'));
 
 // 404 Handler
 app.use((req, res, next) => {
@@ -78,6 +81,37 @@ async function seedAdminUser() {
     }
   } catch (err) {
     console.error('Failed to seed admin user:', err.message);
+  }
+}
+
+// Seed default website categories if collection is empty
+async function seedCategories() {
+  try {
+    const Category = require('./models/Category');
+    const count = await Category.countDocuments();
+    if (count === 0) {
+      const defaultCategories = [
+        "Salon",
+        "Clinic",
+        "Hospital",
+        "Restaurant",
+        "Hotel",
+        "School",
+        "Gym",
+        "Real Estate",
+        "Ecommerce",
+        "Travel Agency",
+        "NGO",
+        "Construction",
+        "Lawyer",
+        "CA",
+        "Personal Portfolio"
+      ];
+      await Category.insertMany(defaultCategories.map(name => ({ name })));
+      console.log('Default website categories seeded successfully.');
+    }
+  } catch (err) {
+    console.error('Failed to seed categories:', err.message);
   }
 }
 

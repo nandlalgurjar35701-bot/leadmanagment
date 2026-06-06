@@ -1,0 +1,327 @@
+<%- include('../layouts/header') %>
+
+<div class="dashboard-container">
+  <div class="container">
+    
+    <!-- Header Title and Add Action -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+      <div>
+        <h1 class="page-title mb-1"><i class="fa-solid fa-address-book text-primary me-2"></i>Leads Pipeline</h1>
+        <p class="text-muted">Track customers, cold calling conversions, follow-up dates, and website buying statuses.</p>
+      </div>
+      <div>
+        <a href="/leads/add" class="btn btn-primary px-4 py-2.5 rounded-3 shadow-sm">
+          <i class="fa-solid fa-plus me-1"></i> Add New Lead
+        </a>
+      </div>
+    </div>
+
+    <!-- Search and Filter Panel Toggle -->
+    <div class="row mb-3">
+      <div class="col-md-8">
+        <form action="/leads" method="GET">
+          <!-- Text Search Box -->
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="q" class="form-control py-2.5 shadow-sm" placeholder="Search by name, email, store, phone number..." value="<%= searchQuery %>">
+            
+            <!-- Retain active filters when doing text search -->
+            <input type="hidden" name="status" value="<%= filters.status %>">
+            <input type="hidden" name="priority" value="<%= filters.priority %>">
+            <input type="hidden" name="category" value="<%= filters.category %>">
+            <input type="hidden" name="assignedTo" value="<%= filters.assignedTo %>">
+            <input type="hidden" name="budgetMin" value="<%= filters.budgetMin %>">
+            <input type="hidden" name="budgetMax" value="<%= filters.budgetMax %>">
+
+            <% if (searchQuery) { %>
+              <a href="/leads?status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>" class="btn btn-sm btn-link position-absolute end-0 top-50 translate-middle-y me-3 text-secondary text-decoration-none">
+                <i class="fa-solid fa-xmark"></i> Clear Search
+              </a>
+            <% } %>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Collapsible Filters Toggle Button -->
+      <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <button class="btn btn-outline-secondary w-100 py-2.5 rounded-3 text-start d-flex justify-content-between align-items-center shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false" aria-controls="filterPanel">
+          <span><i class="fa-solid fa-filter me-2 text-primary"></i>Advanced Filters</span>
+          <i class="fa-solid fa-chevron-down small"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Collapsible Advanced Filters Card -->
+    <div class="collapse <%= (filters.status || filters.priority || filters.category || filters.assignedTo || filters.budgetMin || filters.budgetMax) ? 'show' : '' %> mb-4" id="filterPanel">
+      <div class="card stat-card border p-4">
+        <h6 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-sliders text-secondary me-2"></i>Filter Leads</h6>
+        <form action="/leads" method="GET">
+          <!-- Carry search query -->
+          <input type="hidden" name="q" value="<%= searchQuery %>">
+
+          <div class="row g-3">
+            <!-- Status Filter -->
+            <div class="col-md-3">
+              <label for="filter-status" class="form-label small fw-medium">Status</label>
+              <select name="status" id="filter-status" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="New Lead" <%= filters.status === 'New Lead' ? 'selected' : '' %>>New Lead</option>
+                <option value="Contacted" <%= filters.status === 'Contacted' ? 'selected' : '' %>>Contacted</option>
+                <option value="Interested" <%= filters.status === 'Interested' ? 'selected' : '' %>>Interested</option>
+                <option value="Demo Scheduled" <%= filters.status === 'Demo Scheduled' ? 'selected' : '' %>>Demo Scheduled</option>
+                <option value="Proposal Sent" <%= filters.status === 'Proposal Sent' ? 'selected' : '' %>>Proposal Sent</option>
+                <option value="Negotiation" <%= filters.status === 'Negotiation' ? 'selected' : '' %>>Negotiation</option>
+                <option value="Ready To Buy" <%= filters.status === 'Ready To Buy' ? 'selected' : '' %>>Ready To Buy</option>
+                <option value="Won" <%= filters.status === 'Won' ? 'selected' : '' %>>Won</option>
+                <option value="Lost" <%= filters.status === 'Lost' ? 'selected' : '' %>>Lost</option>
+                <option value="Not Interested" <%= filters.status === 'Not Interested' ? 'selected' : '' %>>Not Interested</option>
+                <option value="Follow-up Required" <%= filters.status === 'Follow-up Required' ? 'selected' : '' %>>Follow-up Required</option>
+              </select>
+            </div>
+
+            <!-- Priority Filter -->
+            <div class="col-md-3">
+              <label for="filter-priority" class="form-label small fw-medium">Priority</label>
+              <select name="priority" id="filter-priority" class="form-select">
+                <option value="">All Priorities</option>
+                <option value="Low" <%= filters.priority === 'Low' ? 'selected' : '' %>>Low</option>
+                <option value="Medium" <%= filters.priority === 'Medium' ? 'selected' : '' %>>Medium</option>
+                <option value="High" <%= filters.priority === 'High' ? 'selected' : '' %>>High</option>
+              </select>
+            </div>
+
+            <!-- Website Category Filter -->
+            <div class="col-md-3">
+              <label for="filter-category" class="form-label small fw-medium">Website Category</label>
+              <select name="category" id="filter-category" class="form-select">
+                <option value="">All Categories</option>
+                <% categories.forEach(function(cat) { %>
+                  <option value="<%= cat.name %>" <%= filters.category === cat.name ? 'selected' : '' %>><%= cat.name %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <!-- Assigned Agent Filter (Admin Only) -->
+            <% if (user.role === 'Admin') { %>
+              <div class="col-md-3">
+                <label for="filter-assignee" class="form-label small fw-medium">Assigned Agent</label>
+                <select name="assignedTo" id="filter-assignee" class="form-select">
+                  <option value="">All Agents</option>
+                  <% agents.forEach(function(agent) { %>
+                    <option value="<%= agent._id %>" <%= filters.assignedTo === agent._id.toString() ? 'selected' : '' %>><%= agent.name %></option>
+                  <% }); %>
+                </select>
+              </div>
+            <% } else { %>
+              <div class="col-md-3">
+                <!-- Spacer for offset -->
+              </div>
+            <% } %>
+
+            <!-- Budget Min Filter -->
+            <div class="col-md-3">
+              <label for="filter-budget-min" class="form-label small fw-medium">Min Budget (₹)</label>
+              <input type="number" name="budgetMin" id="filter-budget-min" class="form-control" placeholder="E.g., 20000" value="<%= filters.budgetMin %>">
+            </div>
+
+            <!-- Budget Max Filter -->
+            <div class="col-md-3">
+              <label for="filter-budget-max" class="form-label small fw-medium">Max Budget (₹)</label>
+              <input type="number" name="budgetMax" id="filter-budget-max" class="form-control" placeholder="E.g., 100000" value="<%= filters.budgetMax %>">
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
+              <a href="/leads" class="btn btn-light px-4 py-2 text-dark rounded-3">Reset Filters</a>
+              <button type="submit" class="btn btn-primary px-4 py-2 rounded-3"><i class="fa-solid fa-circle-check me-1"></i>Apply Filters</button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Leads Table List -->
+    <div class="table-container shadow-sm border mt-4">
+      <div class="table-responsive">
+        <table class="table table-custom align-middle">
+          <thead>
+            <tr>
+              <th scope="col">Customer / Store</th>
+              <th scope="col">Contact</th>
+              <th scope="col">Categories</th>
+              <th scope="col">Budget</th>
+              <th scope="col">Status</th>
+              <th scope="col">Priority</th>
+              <% if (user.role === 'Admin') { %>
+                <th scope="col">Owner</th>
+              <% } %>
+              <th scope="col">Next Follow-up</th>
+              <th scope="col" class="text-center" style="width: 130px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (leads.length > 0) { %>
+              <% leads.forEach(function(lead) { %>
+                <tr>
+                  <!-- Customer & Store -->
+                  <td>
+                    <div>
+                      <strong class="text-dark"><%= lead.name %></strong>
+                      <% if (lead.storeName) { %>
+                        <span class="d-block small text-muted"><i class="fa-solid fa-store me-1 text-secondary"></i><%= lead.storeName %></span>
+                      <% } %>
+                    </div>
+                  </td>
+                  
+                  <!-- Contact -->
+                  <td>
+                    <span class="small text-dark">
+                      <%= lead.mobileNumbers.length > 0 ? lead.mobileNumbers[0].number : 'No mobile' %>
+                    </span>
+                    <% if (lead.email) { %>
+                      <span class="d-block small text-muted"><i class="fa-solid fa-envelope me-1 text-secondary"></i><%= lead.email %></span>
+                    <% } %>
+                  </td>
+
+                  <!-- Categories -->
+                  <td>
+                    <% if (lead.categories.length > 0) { %>
+                      <div class="d-flex flex-wrap gap-1">
+                        <% lead.categories.forEach(function(cat) { %>
+                          <span class="badge bg-light text-secondary border small" style="font-size: 0.7rem;"><%= cat %></span>
+                        <% }); %>
+                      </div>
+                    <% } else { %>
+                      <span class="text-muted small">None</span>
+                    <% } %>
+                  </td>
+
+                  <!-- Budget -->
+                  <td>
+                    <strong class="text-dark">₹<%= lead.budget.toLocaleString('en-IN') %></strong>
+                  </td>
+
+                  <!-- Status badge mapping -->
+                  <td>
+                    <% 
+                      let statusClass = 'bg-secondary';
+                      if (lead.status === 'New Lead') statusClass = 'bg-info bg-opacity-10 text-info border-info border';
+                      else if (lead.status === 'Contacted') statusClass = 'bg-light text-dark border';
+                      else if (lead.status === 'Interested') statusClass = 'bg-primary bg-opacity-10 text-primary border border-primary';
+                      else if (lead.status === 'Demo Scheduled') statusClass = 'bg-warning bg-opacity-10 text-warning border border-warning';
+                      else if (lead.status === 'Proposal Sent') statusClass = 'bg-indigo text-white';
+                      else if (lead.status === 'Won') statusClass = 'bg-success bg-opacity-10 text-success border border-success';
+                      else if (lead.status === 'Lost' || lead.status === 'Not Interested') statusClass = 'bg-danger bg-opacity-10 text-danger border border-danger';
+                      else if (lead.status === 'Follow-up Required') statusClass = 'bg-warning text-dark border border-warning';
+                    %>
+                    <span class="badge badge-custom <%= statusClass %>" style="font-size: 0.75rem;"><%= lead.status %></span>
+                  </td>
+
+                  <!-- Priority -->
+                  <td>
+                    <% 
+                      let priorityClass = 'badge-secondary';
+                      if (lead.priority === 'High') priorityClass = 'bg-danger text-white';
+                      else if (lead.priority === 'Medium') priorityClass = 'bg-warning text-dark';
+                      else priorityClass = 'bg-light text-dark border';
+                    %>
+                    <span class="badge px-2.5 py-1.5 rounded-pill <%= priorityClass %>" style="font-size: 0.7rem;"><%= lead.priority %></span>
+                  </td>
+
+                  <!-- Owner (Admin only) -->
+                  <% if (user.role === 'Admin') { %>
+                    <td>
+                      <span class="small fw-semibold text-dark"><%= lead.assignedTo ? lead.assignedTo.name : 'Unassigned' %></span>
+                    </td>
+                  <% } %>
+
+                  <!-- Next Follow-up -->
+                  <td>
+                    <% if (lead.nextFollowupDate) { %>
+                      <% 
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+                        const followup = new Date(lead.nextFollowupDate);
+                        followup.setHours(0,0,0,0);
+                        const isOverdue = followup < today && lead.status !== 'Won' && lead.status !== 'Lost';
+                      %>
+                      <span class="small <%= isOverdue ? 'text-danger fw-bold' : 'text-dark' %>">
+                        <i class="fa-solid fa-clock me-1"></i><%= new Date(lead.nextFollowupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                        <% if (isOverdue) { %>
+                          <span class="d-block text-danger small font-monospace" style="font-size: 0.65rem;">(OVERDUE)</span>
+                        <% } %>
+                      </span>
+                    <% } else { %>
+                      <span class="text-muted small">Not scheduled</span>
+                    <% } %>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="text-center">
+                    <div class="d-flex gap-1 justify-content-center">
+                      <a href="/leads/view/<%= lead._id %>" class="btn btn-sm btn-outline-primary rounded-2 px-2.5" title="View Details">
+                        <i class="fa-solid fa-eye"></i>
+                      </a>
+                      <a href="/leads/edit/<%= lead._id %>" class="btn btn-sm btn-outline-secondary rounded-2 px-2.5" title="Edit Lead">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="<%= user.role === 'Admin' ? '9' : '8' %>" class="text-center py-5">
+                  <div class="text-muted mb-3">
+                    <i class="fa-solid fa-users fa-3x text-light-emphasis"></i>
+                  </div>
+                  <h6 class="fw-bold">No Leads Found</h6>
+                  <p class="text-muted small">No leads match your active filters or text search query.</p>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <% if (totalPages > 1) { %>
+        <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+          <div class="small text-muted">
+            Page <strong><%= currentPage %></strong> of <strong><%= totalPages %></strong> (Showing <%= leads.length %> leads)
+          </div>
+          <nav aria-label="Page navigation">
+            <ul class="pagination pagination-custom mb-0">
+              
+              <!-- Previous Button -->
+              <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&page=<%= currentPage - 1 %>">
+                  <i class="fa-solid fa-chevron-left small"></i> Prev
+                </a>
+              </li>
+
+              <!-- Page Numbers Loop -->
+              <% for(let i = 1; i <= totalPages; i++) { %>
+                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                  <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&page=<%= i %>"><%= i %></a>
+                </li>
+              <% } %>
+
+              <!-- Next Button -->
+              <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&page=<%= currentPage + 1 %>">
+                  Next <i class="fa-solid fa-chevron-right small"></i>
+                </a>
+              </li>
+
+            </ul>
+          </nav>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>
