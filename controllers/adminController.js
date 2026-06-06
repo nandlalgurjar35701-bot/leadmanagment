@@ -225,3 +225,43 @@ exports.exportLeadsCSV = async (req, res) => {
     res.redirect('/admin/reports');
   }
 };
+
+// Reset sales/agent user password (Admin Privilege)
+exports.resetUserPassword = async (req, res) => {
+  const { id } = req.params;
+  const { newPassword, confirmPassword } = req.body;
+
+  try {
+    if (!newPassword || !confirmPassword) {
+      req.session.error_msg = 'All password fields are required';
+      return res.redirect('/admin/users');
+    }
+
+    if (newPassword !== confirmPassword) {
+      req.session.error_msg = 'Passwords do not match';
+      return res.redirect('/admin/users');
+    }
+
+    if (newPassword.length < 6) {
+      req.session.error_msg = 'Password must be at least 6 characters long';
+      return res.redirect('/admin/users');
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      req.session.error_msg = 'User not found';
+      return res.redirect('/admin/users');
+    }
+
+    // Force update password (triggers pre-save hashing)
+    user.password = newPassword;
+    await user.save();
+
+    req.session.success_msg = `Password for user "${user.name}" has been successfully reset!`;
+    res.redirect('/admin/users');
+  } catch (error) {
+    console.error('Admin password reset error:', error);
+    req.session.error_msg = 'Failed to reset user password';
+    res.redirect('/admin/users');
+  }
+};

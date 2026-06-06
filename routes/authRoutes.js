@@ -10,7 +10,12 @@ router.post('/login', authController.postLogin);
 router.get('/register', authController.getRegister);
 router.post('/register', authController.postRegister);
 
+const { protect } = require('../middleware/authMiddleware');
+
 // Logout Route
 router.get('/logout', authController.logout);
+
+// Change Own Password Route
+router.post('/change-password', protect, authController.changePassword);
 
 module.exports = router;

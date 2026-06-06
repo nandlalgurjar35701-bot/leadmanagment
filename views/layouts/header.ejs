@@ -57,6 +57,11 @@
                 <span class="badge badge-custom badge-sales">Sales</span>
               <% } %>
             </li>
+            <li class="nav-item me-2">
+              <button class="btn btn-outline-light btn-sm px-3" data-bs-toggle="modal" data-bs-target="#changeOwnPasswordModal">
+                <i class="fa-solid fa-key me-1"></i> Password
+              </button>
+            </li>
             <li class="nav-item">
               <a class="btn btn-outline-danger btn-sm px-3" href="/auth/logout">
                 <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
@@ -90,3 +95,37 @@
       </div>
     <% } %>
   </div>
+
+  <!-- Change Own Password Modal (Shared for all logged-in users) -->
+  <% if (user) { %>
+    <div class="modal fade modal-custom" id="changeOwnPasswordModal" tabindex="-1" aria-labelledby="changeOwnPasswordModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow">
+          <div class="modal-header">
+            <h5 class="modal-title" id="changeOwnPasswordModalLabel"><i class="fa-solid fa-lock text-primary me-2"></i>Change Password</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form action="/auth/change-password" method="POST">
+            <div class="modal-body text-dark">
+              <div class="mb-3 text-start">
+                <label for="own-current-password" class="form-label">Current Password</label>
+                <input type="password" class="form-control" id="own-current-password" name="currentPassword" placeholder="Enter current password" required>
+              </div>
+              <div class="mb-3 text-start">
+                <label for="own-new-password" class="form-label">New Password</label>
+                <input type="password" class="form-control" id="own-new-password" name="newPassword" placeholder="Minimum 6 characters" minlength="6" required>
+              </div>
+              <div class="mb-3 text-start">
+                <label for="own-confirm-new-password" class="form-label">Confirm New Password</label>
+                <input type="password" class="form-control" id="own-confirm-new-password" name="confirmNewPassword" placeholder="Re-enter new password" minlength="6" required>
+              </div>
+            </div>
+            <div class="modal-footer border-0 bg-light py-3">
+              <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary px-4 rounded-3"><i class="fa-solid fa-circle-check me-1"></i>Update Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% } %>

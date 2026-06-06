@@ -109,3 +109,48 @@ exports.logout = (req, res) => {
   req.session.success_msg = 'You have logged out successfully';
   res.redirect('/auth/login');
 };
+
+// Handle users changing their own password (Admin & Sales)
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+  try {
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      req.session.error_msg = 'All password fields are required';
+      return res.redirect('back');
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      req.session.error_msg = 'New passwords do not match';
+      return res.redirect('back');
+    }
+
+    if (newPassword.length < 6) {
+      req.session.error_msg = 'New password must be at least 6 characters long';
+      return res.redirect('back');
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      req.session.error_msg = 'User not found';
+      return res.redirect('back');
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      req.session.error_msg = 'Incorrect current password';
+      return res.redirect('back');
+    }
+
+    // Save new password (will trigger userSchema pre-save hashing hook)
+    user.password = newPassword;
+    await user.save();
+
+    req.session.success_msg = 'Password changed successfully!';
+    res.redirect('back');
+  } catch (error) {
+    console.error('Change password error:', error);
+    req.session.error_msg = 'Failed to change password. Please try again.';
+    res.redirect('back');
+  }
+};
