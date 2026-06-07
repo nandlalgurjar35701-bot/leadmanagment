@@ -3,6 +3,14 @@ const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const Lead = require('../models/Lead');
 const User = require('../models/User');
+const Attendance = require('../models/Attendance');
+
+const getLocalDateString = (date) => {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 // Get Main Dashboard Home
 router.get('/', protect, async (req, res) => {
@@ -11,6 +19,9 @@ router.get('/', protect, async (req, res) => {
     if (req.user.role !== 'Admin') {
       query.assignedTo = req.user._id;
     }
+
+    const todayStr = getLocalDateString(new Date());
+    const todayAttendance = await Attendance.findOne({ user: req.user._id, dateString: todayStr });
 
     // Date calculations for reminders
     const startOfToday = new Date();
@@ -115,6 +126,7 @@ router.get('/', protect, async (req, res) => {
 
     res.render('index', { 
       title: 'Dashboard Home',
+      todayAttendance,
       stats: {
         totalLeads,
         todaysFollowups: todaysFollowupsCount,
@@ -140,6 +152,7 @@ router.get('/', protect, async (req, res) => {
     console.error('Error fetching dashboard stats:', error);
     res.render('index', {
       title: 'Dashboard Home',
+      todayAttendance: null,
       stats: {
         totalLeads: 0,
         todaysFollowups: 0,

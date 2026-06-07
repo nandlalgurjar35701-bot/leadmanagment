@@ -4,13 +4,46 @@
   <div class="container">
     
     <!-- Welcome Header -->
-    <div class="row align-items-center mb-4">
-      <div class="col-md-8">
+    <div class="row align-items-center mb-4 g-3">
+      <div class="col-md-7">
         <h1 class="page-title mb-1">Welcome, <%= user.name %>!</h1>
-        <p class="text-muted">You are logged in as <span class="badge badge-custom <%= user.role === 'Admin' ? 'badge-admin' : 'badge-sales' %>"><%= user.role %></span>.</p>
+        <p class="text-muted mb-0">You are logged in as <span class="badge badge-custom <%= user.role === 'Admin' ? 'badge-admin' : 'badge-sales' %>"><%= user.role %></span>.</p>
       </div>
-      <div class="col-md-4 text-md-end">
-        <span class="text-muted small"><i class="fa-solid fa-clock me-1"></i> Today is <%= new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+      <div class="col-md-5">
+        <!-- Quick Attendance Widget -->
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span class="text-muted small d-block mb-1"><i class="fa-solid fa-clock me-1"></i> Shift Tracker (<%= new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>)</span>
+              <% if (typeof todayAttendance === 'undefined' || !todayAttendance) { %>
+                <span class="badge badge-custom bg-danger text-white"><i class="fa-solid fa-circle-exclamation me-1"></i> Not Clocked In</span>
+              <% } else if (todayAttendance && !todayAttendance.clockOut) { %>
+                <span class="badge badge-custom bg-success text-white"><i class="fa-solid fa-spinner fa-spin me-1"></i> Shift Active</span>
+              <% } else { %>
+                <span class="badge badge-custom bg-secondary text-white"><i class="fa-solid fa-circle-check me-1"></i> Completed</span>
+              <% } %>
+            </div>
+            <div>
+              <% if (typeof todayAttendance === 'undefined' || !todayAttendance) { %>
+                <form action="/attendance/clock-in" method="POST" class="d-inline">
+                  <button type="submit" class="btn btn-primary btn-sm px-3 py-2 rounded-3">
+                    <i class="fa-solid fa-right-to-bracket me-1"></i> Clock In
+                  </button>
+                </form>
+              <% } else if (todayAttendance && !todayAttendance.clockOut) { %>
+                <form action="/attendance/clock-out" method="POST" class="d-inline">
+                  <button type="submit" class="btn btn-danger btn-sm px-3 py-2 rounded-3">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Clock Out
+                  </button>
+                </form>
+              <% } else { %>
+                <a href="/attendance" class="btn btn-outline-indigo btn-sm px-3 py-2 rounded-3">
+                  <i class="fa-solid fa-business-time me-1"></i> History
+                </a>
+              <% } %>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
