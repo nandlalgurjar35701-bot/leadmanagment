@@ -37,14 +37,15 @@
               <a class="nav-link" href="/attendance"><i class="fa-solid fa-business-time me-1"></i> Attendance</a>
             </li>
             <% if (user.role === 'Admin') { %>
-              <li class="nav-item">
-                <a class="nav-link" href="/admin/reports"><i class="fa-solid fa-chart-column me-1"></i> CRM Reports</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/admin/categories"><i class="fa-solid fa-tags me-1"></i> Manage Categories</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/admin/users"><i class="fa-solid fa-users-gear me-1"></i> Manage Users</a>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="adminNavbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fa-solid fa-screwdriver-wrench me-1"></i> Admin Panel
+                </a>
+                <ul class="dropdown-menu dropdown-menu-dark shadow border-0 mt-2" aria-labelledby="adminNavbarDropdown">
+                  <li><a class="dropdown-item py-2" href="/admin/reports"><i class="fa-solid fa-chart-column me-2 text-primary"></i> CRM Reports</a></li>
+                  <li><a class="dropdown-item py-2" href="/admin/categories"><i class="fa-solid fa-tags me-2 text-success"></i> Manage Categories</a></li>
+                  <li><a class="dropdown-item py-2" href="/admin/users"><i class="fa-solid fa-users-gear me-2 text-info"></i> Manage Users</a></li>
+                </ul>
               </li>
             <% } %>
           <% } %>
