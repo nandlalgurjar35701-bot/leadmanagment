@@ -7,6 +7,9 @@ const connectDB = require('./config/db');
 
 const app = express();
 
+// Lightweight ping endpoint for keeping server awake (Render Uptime)
+app.get('/ping', (req, res) => res.status(200).send('pong'));
+
 // Connect to Database
 connectDB().then(() => {
   seedAdminUser();
@@ -120,4 +123,28 @@ async function seedCategories() {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  startSelfPing();
 });
+
+// Self-ping uptime logic to keep Render server awake
+function startSelfPing() {
+  const appUrl = process.env.RENDER_EXTERNAL_URL;
+  if (!appUrl) {
+    console.log('Self-ping skipped: RENDER_EXTERNAL_URL env variable is not set.');
+    return;
+  }
+
+  const https = require('https');
+  const http = require('http');
+
+  console.log(`Self-ping worker started. Pinging URL: ${appUrl}/ping every 14 minutes.`);
+
+  setInterval(() => {
+    const protocol = appUrl.startsWith('https') ? https : http;
+    protocol.get(`${appUrl}/ping`, (res) => {
+      console.log(`Self-ping status: ${res.statusCode} at ${new Date().toISOString()}`);
+    }).on('error', (err) => {
+      console.error('Self-ping error:', err.message);
+    });
+  }, 14 * 60 * 1000); // 14 minutes
+}
