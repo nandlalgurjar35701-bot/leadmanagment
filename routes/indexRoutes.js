@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
+const { protect, loadUserContext } = require('../middleware/authMiddleware');
 const Lead = require('../models/Lead');
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
+const Category = require('../models/Category');
 
 const getLocalDateString = (date) => {
   const yyyy = date.getFullYear();
@@ -174,6 +175,105 @@ router.get('/', protect, async (req, res) => {
         performanceStats: []
       }
     });
+  }
+});
+
+// GET /register-lead - Public Form Page
+router.get('/register-lead', loadUserContext, async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ name: 1 });
+    // Source parameter from URL
+    const sourceParam = req.query.source || '';
+    
+    // Map URL parameter to CRM valid source name
+    let leadSource = 'Website';
+    if (sourceParam) {
+      const paramLower = sourceParam.toLowerCase();
+      if (paramLower === 'facebook' || paramLower === 'fb') leadSource = 'Facebook';
+      else if (paramLower === 'instagram' || paramLower === 'ig') leadSource = 'Instagram';
+      else if (paramLower === 'whatsapp' || paramLower === 'wa') leadSource = 'WhatsApp';
+    }
+
+    res.render('register-lead', {
+      title: 'Register Lead',
+      categories,
+      leadSource,
+      user: req.user || null
+    });
+  } catch (error) {
+    console.error('Error loading public lead page:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error', 
+      error: 'Failed to load registration page', 
+      user: req.user || null 
+    });
+  }
+});
+
+// POST /register-lead - Submit Lead Form
+router.post('/register-lead', async (req, res) => {
+  const { name, email, mobileNumber, storeName, address, city, country, categories, notes, leadSource, websiteType } = req.body;
+
+  try {
+    if (!name || !mobileNumber) {
+      req.session.error_msg = 'Name and Mobile Number are required';
+      return res.redirect(`/register-lead?source=${leadSource || 'Website'}`);
+    }
+
+    // Format mobile number
+    const formattedNumbers = [{ number: mobileNumber.trim() }];
+
+    // Parse categories (comes as array or single string)
+    let leadCategories = [];
+    if (categories) {
+      leadCategories = Array.isArray(categories) ? categories : [categories];
+    }
+
+    // Store custom notes / requirements
+    let leadNotes = notes || '';
+    if (websiteType) {
+      leadNotes = `Website Requirement: ${websiteType}\n\n${leadNotes}`.trim();
+    }
+
+    // Validate lead source parameter against Lead schema enum values
+    const validSources = ["Cold Calling", "Facebook", "Instagram", "WhatsApp", "Reference", "Website"];
+    let source = leadSource || 'Website';
+    if (!validSources.includes(source)) {
+      source = 'Website';
+    }
+
+    const newLead = new Lead({
+      name,
+      email: email || undefined,
+      mobileNumbers: formattedNumbers,
+      address,
+      city,
+      country,
+      storeName,
+      categories: leadCategories,
+      budget: 0,
+      leadSource: source,
+      assignedTo: undefined, // unassigned
+      createdBy: undefined, // anonymous submission
+      status: 'New Lead',
+      priority: 'Medium',
+      notes: leadNotes,
+      timeline: [
+        {
+          action: 'Lead Registered',
+          detail: `Lead registered via Public Ads Form (Source: ${source}).`
+        }
+      ]
+    });
+
+    await newLead.save();
+    
+    req.session.success_msg = 'Thank you! Your details have been submitted successfully. Our team will contact you shortly.';
+    res.redirect(`/register-lead?source=${source}`);
+  } catch (error) {
+    console.error('Error submitting public lead:', error);
+    req.session.error_msg = error.message || 'Failed to submit details. Please try again.';
+    res.redirect(`/register-lead?source=${leadSource || 'Website'}`);
   }
 });
 
