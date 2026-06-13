@@ -22,29 +22,15 @@
     <!-- Search and Filter Panel Toggle -->
     <div class="row mb-3">
       <div class="col-md-8">
-        <form action="/leads" method="GET">
+        <form id="search-form" class="mb-0">
           <!-- Text Search Box -->
           <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" name="q" class="form-control py-2.5 shadow-sm" placeholder="Search by name, email, store, phone number..." value="<%= searchQuery %>">
+            <input type="text" name="q" id="search-input" class="form-control py-2.5 shadow-sm" placeholder="Search by name, email, store, phone number..." value="">
             
-            <!-- Retain active filters when doing text search -->
-            <input type="hidden" name="status" value="<%= filters.status %>">
-            <input type="hidden" name="priority" value="<%= filters.priority %>">
-            <input type="hidden" name="category" value="<%= filters.category %>">
-            <input type="hidden" name="assignedTo" value="<%= filters.assignedTo %>">
-            <input type="hidden" name="budgetMin" value="<%= filters.budgetMin %>">
-            <input type="hidden" name="budgetMax" value="<%= filters.budgetMax %>">
-            <input type="hidden" name="city" value="<%= filters.city %>">
-            <input type="hidden" name="country" value="<%= filters.country %>">
-            <input type="hidden" name="startDate" value="<%= filters.startDate %>">
-            <input type="hidden" name="endDate" value="<%= filters.endDate %>">
-
-            <% if (searchQuery) { %>
-              <a href="/leads?status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>" class="btn btn-sm btn-link position-absolute end-0 top-50 translate-middle-y me-3 text-secondary text-decoration-none">
-                <i class="fa-solid fa-xmark"></i> Clear Search
-              </a>
-            <% } %>
+            <button type="button" id="clear-search-btn" class="btn btn-sm btn-link position-absolute end-0 top-50 translate-middle-y me-3 text-secondary text-decoration-none d-none">
+              <i class="fa-solid fa-xmark"></i> Clear Search
+            </button>
           </div>
         </form>
       </div>
@@ -62,9 +48,7 @@
     <div class="collapse <%= (filters.status || filters.priority || filters.category || filters.assignedTo || filters.budgetMin || filters.budgetMax || filters.city || filters.country || filters.startDate || filters.endDate) ? 'show' : '' %> mb-4" id="filterPanel">
       <div class="card stat-card border p-4">
         <h6 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-sliders text-secondary me-2"></i>Filter Leads</h6>
-        <form action="/leads" method="GET">
-          <!-- Carry search query -->
-          <input type="hidden" name="q" value="<%= searchQuery %>">
+        <form id="filter-form" onsubmit="event.preventDefault();">
 
           <div class="row g-3">
             <!-- Status Filter -->
@@ -163,7 +147,7 @@
 
             <!-- Filter Buttons -->
             <div class="col-md-6 d-flex align-items-end justify-content-end gap-2 mt-2 ms-auto">
-              <a href="/leads" class="btn btn-light px-4 py-2 text-dark rounded-3">Reset Filters</a>
+              <button type="button" id="reset-filters-btn" class="btn btn-light px-4 py-2 text-dark rounded-3">Reset Filters</button>
               <button type="submit" class="btn btn-primary px-4 py-2 rounded-3"><i class="fa-solid fa-circle-check me-1"></i>Apply Filters</button>
             </div>
 
@@ -191,173 +175,351 @@
               <th scope="col" class="text-center" style="width: 130px;">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <% if (leads.length > 0) { %>
-              <% leads.forEach(function(lead) { %>
-                <tr>
-                  <!-- Customer & Store -->
-                  <td>
-                    <div>
-                      <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <strong class="text-dark"><%= lead.name %></strong>
-                        <% 
-                          const badge = lead.scoreCategory;
-                        %>
-                        <span class="badge <%= badge.class %>" style="font-size: 0.65rem;" title="Lead Score: <%= lead.score %>">
-                          <%= badge.emoji %> <%= badge.name %>
-                        </span>
-                      </div>
-                      <% if (lead.storeName) { %>
-                        <span class="d-block small text-muted"><i class="fa-solid fa-store me-1 text-secondary"></i><%= lead.storeName %></span>
-                      <% } %>
-                    </div>
-                  </td>
-                  
-                  <!-- Contact -->
-                  <td>
-                    <span class="small text-dark">
-                      <%= lead.mobileNumbers.length > 0 ? lead.mobileNumbers[0].number : 'No mobile' %>
-                    </span>
-                    <% if (lead.email) { %>
-                      <span class="d-block small text-muted"><i class="fa-solid fa-envelope me-1 text-secondary"></i><%= lead.email %></span>
-                    <% } %>
-                  </td>
-
-                  <!-- Categories -->
-                  <td>
-                    <% if (lead.categories.length > 0) { %>
-                      <div class="d-flex flex-wrap gap-1">
-                        <% lead.categories.forEach(function(cat) { %>
-                          <span class="badge bg-light text-secondary border small" style="font-size: 0.7rem;"><%= cat %></span>
-                        <% }); %>
-                      </div>
-                    <% } else { %>
-                      <span class="text-muted small">None</span>
-                    <% } %>
-                  </td>
-
-                  <!-- Budget -->
-                  <td>
-                    <strong class="text-dark">₹<%= lead.budget.toLocaleString('en-IN') %></strong>
-                  </td>
-
-                  <!-- Status badge mapping -->
-                  <td>
-                    <% 
-                      let statusClass = 'bg-secondary';
-                      if (lead.status === 'New Lead') statusClass = 'bg-info bg-opacity-10 text-info border-info border';
-                      else if (lead.status === 'Contacted') statusClass = 'bg-light text-dark border';
-                      else if (lead.status === 'Interested') statusClass = 'bg-primary bg-opacity-10 text-primary border border-primary';
-                      else if (lead.status === 'Demo Scheduled') statusClass = 'bg-warning bg-opacity-10 text-warning border border-warning';
-                      else if (lead.status === 'Proposal Sent') statusClass = 'bg-indigo text-white';
-                      else if (lead.status === 'Won') statusClass = 'bg-success bg-opacity-10 text-success border border-success';
-                      else if (lead.status === 'Lost' || lead.status === 'Not Interested') statusClass = 'bg-danger bg-opacity-10 text-danger border border-danger';
-                      else if (lead.status === 'Follow-up Required') statusClass = 'bg-warning text-dark border border-warning';
-                    %>
-                    <span class="badge badge-custom <%= statusClass %>" style="font-size: 0.75rem;"><%= lead.status %></span>
-                  </td>
-
-                  <!-- Priority -->
-                  <td>
-                    <% 
-                      let priorityClass = 'badge-secondary';
-                      if (lead.priority === 'High') priorityClass = 'bg-danger text-white';
-                      else if (lead.priority === 'Medium') priorityClass = 'bg-warning text-dark';
-                      else priorityClass = 'bg-light text-dark border';
-                    %>
-                    <span class="badge px-2.5 py-1.5 rounded-pill <%= priorityClass %>" style="font-size: 0.7rem;"><%= lead.priority %></span>
-                  </td>
-
-                  <!-- Owner (Admin only) -->
-                  <% if (user.role === 'Admin') { %>
-                    <td>
-                      <span class="small fw-semibold text-dark"><%= lead.assignedTo ? lead.assignedTo.name : 'Unassigned' %></span>
-                    </td>
-                  <% } %>
-
-                  <!-- Next Follow-up -->
-                  <td>
-                    <% if (lead.nextFollowupDate) { %>
-                      <% 
-                        const today = new Date();
-                        today.setHours(0,0,0,0);
-                        const followup = new Date(lead.nextFollowupDate);
-                        followup.setHours(0,0,0,0);
-                        const isOverdue = followup < today && lead.status !== 'Won' && lead.status !== 'Lost';
-                      %>
-                      <span class="small <%= isOverdue ? 'text-danger fw-bold' : 'text-dark' %>">
-                        <i class="fa-solid fa-clock me-1"></i><%= new Date(lead.nextFollowupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
-                        <% if (isOverdue) { %>
-                          <span class="d-block text-danger small font-monospace" style="font-size: 0.65rem;">(OVERDUE)</span>
-                        <% } %>
-                      </span>
-                    <% } else { %>
-                      <span class="text-muted small">Not scheduled</span>
-                    <% } %>
-                  </td>
-
-                  <!-- Actions -->
-                  <td class="text-center">
-                    <div class="d-flex gap-1 justify-content-center">
-                      <a href="/leads/view/<%= lead._id %>" class="btn btn-sm btn-outline-primary rounded-2 px-2.5" title="View Details">
-                        <i class="fa-solid fa-eye"></i>
-                      </a>
-                      <a href="/leads/edit/<%= lead._id %>" class="btn btn-sm btn-outline-secondary rounded-2 px-2.5" title="Edit Lead">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-              <% }); %>
-            <% } else { %>
-              <tr>
-                <td colspan="<%= user.role === 'Admin' ? '9' : '8' %>" class="text-center py-5">
-                  <div class="text-muted mb-3">
-                    <i class="fa-solid fa-users fa-3x text-light-emphasis"></i>
-                  </div>
-                  <h6 class="fw-bold">No Leads Found</h6>
-                  <p class="text-muted small">No leads match your active filters or text search query.</p>
-                </td>
-              </tr>
-            <% } %>
+          <tbody id="leads-tbody">
+            <tr id="leads-loading-row">
+              <td colspan="<%= user.role === 'Admin' ? '9' : '8' %>" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2 small">Loading leads pipeline...</p>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Pagination Footer -->
-      <% if (totalPages > 1) { %>
-        <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
-          <div class="small text-muted">
-            Page <strong><%= currentPage %></strong> of <strong><%= totalPages %></strong> (Showing <%= leads.length %> leads)
+      <!-- Pagination Container (Rendered dynamically) -->
+      <div id="pagination-container"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Client-side AJAX Script -->
+<script>
+  const USER_ROLE = '<%= user.role %>';
+  let currentPage = 1;
+  let activeSearch = '';
+  
+  // Cache DOM elements
+  const searchForm = document.getElementById('search-form');
+  const searchInput = document.getElementById('search-input');
+  const clearSearchBtn = document.getElementById('clear-search-btn');
+  const filterForm = document.getElementById('filter-form');
+  const resetFiltersBtn = document.getElementById('reset-filters-btn');
+  const leadsTbody = document.getElementById('leads-tbody');
+  const loadingRow = document.getElementById('leads-loading-row');
+  const paginationContainer = document.getElementById('pagination-container');
+
+  // Debounce helper for instant search as you type
+  function debounce(func, timeout = 300) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+  }
+
+  // Load leads from API
+  async function loadLeads(page = 1) {
+    currentPage = page;
+    
+    // Gather query parameters
+    const params = new URLSearchParams({
+      format: 'json',
+      page: page,
+      q: searchInput.value.trim()
+    });
+
+    // Append filter form data
+    const formData = new FormData(filterForm);
+    for (const [key, val] of formData.entries()) {
+      if (val) {
+        params.append(key, val);
+      }
+    }
+
+    // Toggle clear search button visibility
+    if (searchInput.value.trim()) {
+      clearSearchBtn.classList.remove('d-none');
+    } else {
+      clearSearchBtn.classList.add('d-none');
+    }
+
+    // Show loading state
+    loadingRow.classList.remove('d-none');
+    
+    // Clear old lead rows (keep loading row)
+    const oldRows = leadsTbody.querySelectorAll('tr:not(#leads-loading-row)');
+    oldRows.forEach(r => r.remove());
+
+    try {
+      const response = await fetch(`/leads?${params.toString()}`);
+      const result = await response.json();
+      
+      loadingRow.classList.add('d-none');
+
+      if (!result.success) {
+        showError('Failed to fetch leads data');
+        return;
+      }
+
+      renderLeads(result.leads);
+      renderPagination(result.currentPage, result.totalPages, result.totalCount, result.leads.length);
+    } catch (error) {
+      console.error('AJAX fetch error:', error);
+      loadingRow.classList.add('d-none');
+      showError('Connection error. Failed to load leads.');
+    }
+  }
+
+  // Show error message row
+  function showError(msg) {
+    leadsTbody.innerHTML = `
+      <tr>
+        <td colspan="${USER_ROLE === 'Admin' ? '9' : '8'}" class="text-center py-5 text-danger fw-semibold">
+          <i class="fa-solid fa-circle-exclamation me-1"></i> ${msg}
+        </td>
+      </tr>
+    `;
+    paginationContainer.innerHTML = '';
+  }
+
+  // Render Lead Rows
+  function renderLeads(leads) {
+    // Clear old lead rows just in case
+    const oldRows = leadsTbody.querySelectorAll('tr:not(#leads-loading-row)');
+    oldRows.forEach(r => r.remove());
+
+    if (leads.length === 0) {
+      const emptyRow = document.createElement('tr');
+      emptyRow.innerHTML = `
+        <td colspan="${USER_ROLE === 'Admin' ? '9' : '8'}" class="text-center py-5">
+          <div class="text-muted mb-3">
+            <i class="fa-solid fa-users fa-3x text-light-emphasis"></i>
           </div>
-          <nav aria-label="Page navigation">
-            <ul class="pagination pagination-custom mb-0">
-              
-              <!-- Previous Button -->
-              <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&city=<%= filters.city %>&country=<%= filters.country %>&startDate=<%= filters.startDate %>&endDate=<%= filters.endDate %>&page=<%= currentPage - 1 %>">
-                  <i class="fa-solid fa-chevron-left small"></i> Prev
-                </a>
-              </li>
+          <h6 class="fw-bold">No Leads Found</h6>
+          <p class="text-muted small">No leads match your active filters or text search query.</p>
+        </td>
+      `;
+      leadsTbody.appendChild(emptyRow);
+      return;
+    }
 
-              <!-- Page Numbers Loop -->
-              <% for(let i = 1; i <= totalPages; i++) { %>
-                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                  <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&city=<%= filters.city %>&country=<%= filters.country %>&startDate=<%= filters.startDate %>&endDate=<%= filters.endDate %>&page=<%= i %>"><%= i %></a>
-                </li>
-              <% } %>
+    leads.forEach(lead => {
+      const tr = document.createElement('tr');
+      
+      // 1. Customer & Store details
+      const scoreBadge = lead.scoreCategory || { name: 'Cold Lead', emoji: '❄️', class: 'bg-info bg-opacity-10 text-info border border-info' };
+      let storeHtml = lead.storeName ? `<span class="d-block small text-muted"><i class="fa-solid fa-store me-1 text-secondary"></i>${escapeHtml(lead.storeName)}</span>` : '';
+      
+      // 2. Contact details
+      const primaryPhone = lead.mobileNumbers && lead.mobileNumbers.length > 0 ? lead.mobileNumbers[0].number : 'No mobile';
+      let emailHtml = lead.email ? `<span class="d-block small text-muted"><i class="fa-solid fa-envelope me-1 text-secondary"></i>${escapeHtml(lead.email)}</span>` : '';
 
-              <!-- Next Button -->
-              <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                <a class="page-link" href="/leads?q=<%= searchQuery %>&status=<%= filters.status %>&priority=<%= filters.priority %>&category=<%= filters.category %>&assignedTo=<%= filters.assignedTo %>&budgetMin=<%= filters.budgetMin %>&budgetMax=<%= filters.budgetMax %>&city=<%= filters.city %>&country=<%= filters.country %>&startDate=<%= filters.startDate %>&endDate=<%= filters.endDate %>&page=<%= currentPage + 1 %>">
-                  Next <i class="fa-solid fa-chevron-right small"></i>
-                </a>
-              </li>
+      // 3. Category badges
+      let categoriesHtml = 'None';
+      if (lead.categories && lead.categories.length > 0) {
+        categoriesHtml = `<div class="d-flex flex-wrap gap-1">
+          ${lead.categories.map(c => `<span class="badge bg-light text-secondary border small" style="font-size: 0.7rem;">${escapeHtml(c)}</span>`).join('')}
+        </div>`;
+      }
 
-            </ul>
-          </nav>
+      // 4. Budget
+      const budgetFormatted = lead.budget ? '₹' + Number(lead.budget).toLocaleString('en-IN') : '₹0';
+
+      // 5. Status styling
+      const statusClass = getStatusClass(lead.status);
+
+      // 6. Priority styling
+      const priorityClass = getPriorityClass(lead.priority);
+
+      // 7. Owner/Agent name (Admin only)
+      let ownerHtml = '';
+      if (USER_ROLE === 'Admin') {
+        const ownerName = lead.assignedTo ? lead.assignedTo.name : 'Unassigned';
+        ownerHtml = `<td><span class="small fw-semibold text-dark">${escapeHtml(ownerName)}</span></td>`;
+      }
+
+      // 8. Next Follow-up Overdue calculations
+      let followupHtml = '<span class="text-muted small">Not scheduled</span>';
+      if (lead.nextFollowupDate) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const followup = new Date(lead.nextFollowupDate);
+        followup.setHours(0,0,0,0);
+        const isOverdue = followup < today && lead.status !== 'Won' && lead.status !== 'Lost';
+        const formattedDate = new Date(lead.nextFollowupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        followupHtml = `
+          <span class="small ${isOverdue ? 'text-danger fw-bold' : 'text-dark'}">
+            <i class="fa-solid fa-clock me-1"></i>${formattedDate}
+            ${isOverdue ? '<span class="d-block text-danger small font-monospace" style="font-size: 0.65rem;">(OVERDUE)</span>' : ''}
+          </span>
+        `;
+      }
+
+      tr.innerHTML = `
+        <td>
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <strong class="text-dark">${escapeHtml(lead.name)}</strong>
+              <span class="badge ${scoreBadge.class}" style="font-size: 0.65rem;" title="Lead Score: ${lead.score || 0}">
+                ${scoreBadge.emoji} ${scoreBadge.name}
+              </span>
+            </div>
+            ${storeHtml}
+          </div>
+        </td>
+        <td>
+          <span class="small text-dark">${escapeHtml(primaryPhone)}</span>
+          ${emailHtml}
+        </td>
+        <td>${categoriesHtml}</td>
+        <td><strong class="text-dark">${budgetFormatted}</strong></td>
+        <td><span class="badge badge-custom ${statusClass}" style="font-size: 0.75rem;">${lead.status}</span></td>
+        <td><span class="badge px-2.5 py-1.5 rounded-pill ${priorityClass}" style="font-size: 0.7rem;">${lead.priority}</span></td>
+        ${ownerHtml}
+        <td>${followupHtml}</td>
+        <td class="text-center">
+          <div class="d-flex gap-1 justify-content-center">
+            <a href="/leads/view/${lead._id}" class="btn btn-sm btn-outline-primary rounded-2 px-2.5" title="View Details">
+              <i class="fa-solid fa-eye"></i>
+            </a>
+            <a href="/leads/edit/${lead._id}" class="btn btn-sm btn-outline-secondary rounded-2 px-2.5" title="Edit Lead">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </a>
+          </div>
+        </td>
+      `;
+
+      leadsTbody.appendChild(tr);
+    });
+  }
+
+  // Render pagination buttons dynamically
+  function renderPagination(current, total, totalCount, loadedCount) {
+    if (total <= 1) {
+      paginationContainer.innerHTML = '';
+      return;
+    }
+
+    let pageButtons = '';
+    
+    // Page Numbers loop
+    for (let i = 1; i <= total; i++) {
+      pageButtons += `
+        <li class="page-item ${current === i ? 'active' : ''}">
+          <button class="page-link" onclick="loadLeads(${i})">${i}</button>
+        </li>
+      `;
+    }
+
+    paginationContainer.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+        <div class="small text-muted">
+          Page <strong>${current}</strong> of <strong>${total}</strong> (Showing ${loadedCount} leads)
         </div>
-      <% } %>
+        <nav aria-label="Page navigation">
+          <ul class="pagination pagination-custom mb-0">
+            <!-- Prev Button -->
+            <li class="page-item ${current === 1 ? 'disabled' : ''}">
+              <button class="page-link" ${current === 1 ? 'disabled' : ''} onclick="loadLeads(${current - 1})">
+                <i class="fa-solid fa-chevron-left small"></i> Prev
+              </button>
+            </li>
+            
+            ${pageButtons}
+
+            <!-- Next Button -->
+            <li class="page-item ${current === total ? 'disabled' : ''}">
+              <button class="page-link" ${current === total ? 'disabled' : ''} onclick="loadLeads(${current + 1})">
+                Next <i class="fa-solid fa-chevron-right small"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    `;
+  }
+
+  // Helper function to escape HTML special characters
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // Get status class color scheme
+  function getStatusClass(status) {
+    if (status === 'New Lead') return 'bg-info bg-opacity-10 text-info border-info border';
+    if (status === 'Contacted') return 'bg-light text-dark border';
+    if (status === 'Interested') return 'bg-primary bg-opacity-10 text-primary border border-primary';
+    if (status === 'Demo Scheduled') return 'bg-warning bg-opacity-10 text-warning border border-warning';
+    if (status === 'Proposal Sent') return 'bg-indigo text-white';
+    if (status === 'Won') return 'bg-success bg-opacity-10 text-success border border-success';
+    if (status === 'Lost' || status === 'Not Interested') return 'bg-danger bg-opacity-10 text-danger border border-danger';
+    if (status === 'Follow-up Required') return 'bg-warning text-dark border border-warning';
+    return 'bg-secondary';
+  }
+
+  // Get priority class color scheme
+  function getPriorityClass(priority) {
+    if (priority === 'High') return 'bg-danger text-white';
+    if (priority === 'Medium') return 'bg-warning text-dark';
+    return 'bg-light text-dark border';
+  }
+
+  // Bind Event Listeners
+  
+  // Submit search box
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    loadLeads(1);
+  });
+
+  // Debounced search on typing
+  searchInput.addEventListener('input', debounce(() => {
+    loadLeads(1);
+  }, 300));
+
+  // Clear search input button
+  clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    loadLeads(1);
+  });
+
+  // Apply filters button
+  filterForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    loadLeads(1);
+  });
+
+  // Live reload on filter selection change (instantly loads query)
+  document.querySelectorAll('#filter-form select, #filter-form input').forEach(el => {
+    el.addEventListener('change', () => {
+      // Don't trigger load if it's text inputs unless blurred, otherwise select change is instant
+      if (el.tagName === 'SELECT' || el.type === 'date') {
+        loadLeads(1);
+      }
+    });
+  });
+
+  // Reset Filters Button Click
+  resetFiltersBtn.addEventListener('click', () => {
+    filterForm.reset();
+    loadLeads(1);
+  });
+
+  // Initial load on page ready
+  document.addEventListener('DOMContentLoaded', () => {
+    loadLeads(1);
+  });
+</script>
     </div>
 
   </div>

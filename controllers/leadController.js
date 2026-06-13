@@ -6,114 +6,130 @@ const FollowUp = require('../models/FollowUp');
 // Get leads list with search, pagination, and advanced filters
 exports.getLeads = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.q || '';
-    
-    // Construct lead query
-    let query = {};
+    const format = req.query.format || '';
 
-    // Role restriction
-    if (req.user.role !== 'Admin') {
-      query.assignedTo = req.user._id;
-    }
+    if (format === 'json') {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const search = req.query.q || '';
+      
+      // Construct lead query
+      let query = {};
 
-    // Free Text Search (Name, Email, Store Name, Mobile Numbers)
-    if (search) {
-      query.$and = query.$and || [];
-      query.$and.push({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-          { storeName: { $regex: search, $options: 'i' } },
-          { 'mobileNumbers.number': { $regex: search, $options: 'i' } }
-        ]
+      // Role restriction
+      if (req.user.role !== 'Admin') {
+        query.assignedTo = req.user._id;
+      }
+
+      // Free Text Search (Name, Email, Store Name, Mobile Numbers)
+      if (search) {
+        query.$and = query.$and || [];
+        query.$and.push({
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+            { storeName: { $regex: search, $options: 'i' } },
+            { 'mobileNumbers.number': { $regex: search, $options: 'i' } }
+          ]
+        });
+      }
+
+      // Advanced Filters
+      const { status, priority, category, assignedTo, budgetMin, budgetMax, city, country, startDate, endDate } = req.query;
+
+      if (status) {
+        query.status = status;
+      }
+      if (priority) {
+        query.priority = priority;
+      }
+      if (category) {
+        query.categories = category;
+      }
+      if (req.user.role === 'Admin' && assignedTo) {
+        query.assignedTo = assignedTo;
+      }
+      if (city) {
+        query.city = { $regex: city, $options: 'i' };
+      }
+      if (country) {
+        query.country = { $regex: country, $options: 'i' };
+      }
+      
+      // Budget range filter
+      if (budgetMin || budgetMax) {
+        query.budget = {};
+        if (budgetMin) {
+          query.budget.$gte = Number(budgetMin);
+        }
+        if (budgetMax) {
+          query.budget.$lte = Number(budgetMax);
+        }
+      }
+
+      // Date range filter
+      if (startDate || endDate) {
+        query.createdAt = {};
+        if (startDate) {
+          query.createdAt.$gte = new Date(startDate);
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          query.createdAt.$lte = end;
+        }
+      }
+
+      const totalLeads = await Lead.countDocuments(query);
+      const leads = await Lead.find(query)
+        .populate('assignedTo', 'name email')
+        .populate('createdBy', 'name email')
+        .sort({ updatedAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      return res.json({
+        success: true,
+        leads: leads.map(lead => lead.toJSON()),
+        currentPage: page,
+        totalPages: Math.ceil(totalLeads / limit),
+        totalCount: totalLeads,
+        limit
       });
     }
 
-    // Advanced Filters
-    const { status, priority, category, assignedTo, budgetMin, budgetMax, city, country, startDate, endDate } = req.query;
-
-    if (status) {
-      query.status = status;
-    }
-    if (priority) {
-      query.priority = priority;
-    }
-    if (category) {
-      query.categories = category;
-    }
-    if (req.user.role === 'Admin' && assignedTo) {
-      query.assignedTo = assignedTo;
-    }
-    if (city) {
-      query.city = { $regex: city, $options: 'i' };
-    }
-    if (country) {
-      query.country = { $regex: country, $options: 'i' };
-    }
-    
-    // Budget range filter
-    if (budgetMin || budgetMax) {
-      query.budget = {};
-      if (budgetMin) {
-        query.budget.$gte = Number(budgetMin);
-      }
-      if (budgetMax) {
-        query.budget.$lte = Number(budgetMax);
-      }
-    }
-
-    // Date range filter
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) {
-        query.createdAt.$gte = new Date(startDate);
-      }
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        query.createdAt.$lte = end;
-      }
-    }
-
-    const totalLeads = await Lead.countDocuments(query);
-    const leads = await Lead.find(query)
-      .populate('assignedTo', 'name email')
-      .populate('createdBy', 'name email')
-      .sort({ updatedAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
-
-    // Fetch filters options
+    // Standard Server-Side Skeleton Render (loads page structure instantly)
     const categories = await Category.find({ isActive: { $ne: false } }).sort({ name: 1 });
     const agents = req.user.role === 'Admin' ? await User.find({ isActive: true }).sort({ name: 1 }) : [];
 
     res.render('leads/index', {
       title: 'Leads Pipeline',
-      leads,
-      currentPage: page,
-      totalPages: Math.ceil(totalLeads / limit),
-      limit,
-      searchQuery: search,
-      totalCount: totalLeads,
+      leads: [],
+      currentPage: 1,
+      totalPages: 1,
+      limit: 10,
+      searchQuery: '',
+      totalCount: 0,
       categories,
       agents,
       filters: {
-        status: status || '',
-        priority: priority || '',
-        category: category || '',
-        assignedTo: assignedTo || '',
-        budgetMin: budgetMin || '',
-        budgetMax: budgetMax || '',
-        city: city || '',
-        country: country || '',
-        startDate: startDate || '',
-        endDate: endDate || ''
+        status: '',
+        priority: '',
+        category: '',
+        assignedTo: '',
+        budgetMin: '',
+        budgetMax: '',
+        city: '',
+        country: '',
+        startDate: '',
+        endDate: ''
       }
     });
   } catch (error) {
     console.error('Error fetching leads:', error);
+    if (req.query.format === 'json') {
+      return res.status(500).json({ success: false, message: 'Failed to load leads list' });
+    }
     req.session.error_msg = 'Failed to load leads list';
     res.redirect('/');
   }
