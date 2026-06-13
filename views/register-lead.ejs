@@ -255,33 +255,16 @@
       <div class="col-lg-9 col-xl-8">
 
         <div class="card project-card overflow-hidden">
-          <!-- Banner Hero -->
-          <div class="text-center py-5 px-4 text-white"
-            style="background: radial-gradient(circle at top, rgba(99, 102, 241, 0.2) 0%, transparent 70%);">
-            <div class="mb-3 animate-bounce-slow">
-              <i class="fa-solid fa-laptop-code fa-3x" style="color: #818cf8;"></i>
+          <!-- Compact Banner Hero -->
+          <div class="text-center py-4 px-3 text-white"
+            style="background: radial-gradient(circle at top, rgba(99, 102, 241, 0.2) 0%, transparent 70%); border-bottom: 1px solid var(--border-color);">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+              <i class="fa-solid fa-laptop-code text-indigo fa-lg animate-bounce-slow" style="color: #818cf8;"></i>
+              <h4 class="fw-bold m-0 text-white">Project Discovery & Quote</h4>
             </div>
-            <h2 class="fw-bold mb-2">Request Project Discovery & Quote</h2>
-            <p class="mb-0 opacity-75 text-white px-md-4">
-              Tell us about your software, website, or application concept. Our senior software engineers will review
-              your industry needs and schedule a custom project consultation.
+            <p class="mb-0 opacity-75 text-white small px-md-3">
+              Submit your requirements below to receive a custom solution & quote from our software engineers.
             </p>
-
-            <!-- Trust Badges for IT Company -->
-            <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
-              <span
-                class="badge bg-light bg-opacity-10 text-white border border-light border-opacity-10 px-3 py-2 rounded-pill small fw-medium">
-                <i class="fa-solid fa-check-double text-success me-1"></i> ISO 9001 Certified
-              </span>
-              <span
-                class="badge bg-light bg-opacity-10 text-white border border-light border-opacity-10 px-3 py-2 rounded-pill small fw-medium">
-                <i class="fa-solid fa-shield-halved text-info me-1"></i> Secure Project Portal
-              </span>
-              <span
-                class="badge bg-light bg-opacity-10 text-white border border-light border-opacity-10 px-3 py-2 rounded-pill small fw-medium">
-                <i class="fa-solid fa-file-contract text-warning me-1"></i> NDA Protected
-              </span>
-            </div>
           </div>
 
           <!-- Form Panel -->
@@ -425,8 +408,24 @@
                   placeholder="Detail any technical requirements (e.g. database integrations, payment gateways, custom APIs, user dashboards)..."></textarea>
               </div>
 
-              <!-- Submit Button -->
+              <!-- Submit Button & Trust Badges -->
               <div class="text-center mt-5">
+                <!-- Trust Badges (Relocated here for better mobile visibility above the fold) -->
+                <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                  <span
+                    class="badge bg-light bg-opacity-10 text-white border border-light border-opacity-10 px-3 py-2 rounded-pill small fw-medium">
+                    <i class="fa-solid fa-check-double text-success me-1"></i> ISO 9001 Certified
+                  </span>
+                  <span
+                    class="badge bg-light bg-opacity-10 text-white border border-light border-opacity-10 px-3 py-2 rounded-pill small fw-medium">
+                    <i class="fa-solid fa-shield-halved text-info me-1"></i> Secure Project Portal
+                  </span>
+                  <span
+                    class="badge bg-light bg-opacity-10 text-white border border-light border-opacity-10 px-3 py-2 rounded-pill small fw-medium">
+                    <i class="fa-solid fa-file-contract text-warning me-1"></i> NDA Protected
+                  </span>
+                </div>
+
                 <button type="submit" class="btn btn-submit-project btn-lg px-5 py-3 shadow-lg">
                   Submit Project Discovery Request <i class="fa-solid fa-circle-arrow-right ms-2"></i>
                 </button>
