@@ -17,7 +17,7 @@ exports.getCategories = async (req, res) => {
 
 // Create a new category
 exports.createCategory = async (req, res) => {
-  const { name } = req.body;
+  const { name, icon } = req.body;
 
   try {
     if (!name || !name.trim()) {
@@ -33,7 +33,10 @@ exports.createCategory = async (req, res) => {
       return res.redirect('/admin/categories');
     }
 
-    const category = new Category({ name: trimmedName });
+    const category = new Category({ 
+      name: trimmedName,
+      icon: icon && icon.trim() ? icon.trim() : 'fa-tags'
+    });
     await category.save();
 
     req.session.success_msg = `Category "${trimmedName}" created successfully!`;
@@ -142,6 +145,46 @@ exports.toggleCategoryStatus = async (req, res) => {
   } catch (error) {
     console.error('Error toggling category status:', error);
     req.session.error_msg = 'Failed to update category status';
+    res.redirect('/admin/categories');
+  }
+};
+
+// Edit Category Name and Icon (Admin Privilege)
+exports.editCategory = async (req, res) => {
+  const { id } = req.params;
+  const { name, icon } = req.body;
+
+  try {
+    if (!name || !name.trim()) {
+      req.session.error_msg = 'Category name cannot be empty';
+      return res.redirect('/admin/categories');
+    }
+
+    const trimmedName = name.trim();
+    const category = await Category.findById(id);
+    if (!category) {
+      req.session.error_msg = 'Category not found';
+      return res.redirect('/admin/categories');
+    }
+
+    // If name changed, verify that the new name does not clash with another category
+    if (trimmedName.toLowerCase() !== category.name.toLowerCase()) {
+      const exists = await Category.findOne({ name: { $regex: new RegExp(`^${trimmedName}$`, 'i') } });
+      if (exists) {
+        req.session.error_msg = `Category "${trimmedName}" already exists`;
+        return res.redirect('/admin/categories');
+      }
+    }
+
+    category.name = trimmedName;
+    category.icon = icon && icon.trim() ? icon.trim() : 'fa-tags';
+    await category.save();
+
+    req.session.success_msg = `Category updated successfully!`;
+    res.redirect('/admin/categories');
+  } catch (error) {
+    console.error('Error editing category:', error);
+    req.session.error_msg = 'Failed to edit category';
     res.redirect('/admin/categories');
   }
 };

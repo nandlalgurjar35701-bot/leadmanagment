@@ -11,6 +11,10 @@ const categorySchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  icon: {
+    type: String,
+    default: 'fa-tags'
+  },
   urls: [
     {
       title: { type: String, trim: true },

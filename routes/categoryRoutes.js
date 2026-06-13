@@ -12,6 +12,7 @@ router.get('/', categoryController.getCategories);
 router.post('/', categoryController.createCategory);
 router.post('/delete/:id', categoryController.deleteCategory);
 router.post('/toggle-status/:id', categoryController.toggleCategoryStatus);
+router.post('/edit/:id', categoryController.editCategory);
 
 // URL management routes (Admin only)
 router.post('/add-url/:id', categoryController.addCategoryUrl);
