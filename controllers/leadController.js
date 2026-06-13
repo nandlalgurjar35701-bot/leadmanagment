@@ -86,7 +86,7 @@ exports.getLeads = async (req, res) => {
       .limit(limit);
 
     // Fetch filters options
-    const categories = await Category.find().sort({ name: 1 });
+    const categories = await Category.find({ isActive: { $ne: false } }).sort({ name: 1 });
     const agents = req.user.role === 'Admin' ? await User.find({ isActive: true }).sort({ name: 1 }) : [];
 
     res.render('leads/index', {
@@ -122,7 +122,7 @@ exports.getLeads = async (req, res) => {
 // Render form to add lead
 exports.getAddLead = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
+    const categories = await Category.find({ isActive: { $ne: false } }).sort({ name: 1 });
     const agents = await User.find({ isActive: true }).sort({ name: 1 });
     
     res.render('leads/add', {
@@ -265,7 +265,7 @@ exports.getEditLead = async (req, res) => {
       return res.redirect('/leads');
     }
 
-    const categories = await Category.find().sort({ name: 1 });
+    const categories = await Category.find({ isActive: { $ne: false } }).sort({ name: 1 });
     const agents = await User.find({ isActive: true }).sort({ name: 1 });
 
     res.render('leads/edit', {

@@ -181,7 +181,7 @@ router.get('/', protect, async (req, res) => {
 // GET /register-lead - Public Form Page
 router.get('/register-lead', loadUserContext, async (req, res) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
+    const categories = await Category.find({ isActive: { $ne: false } }).sort({ name: 1 });
     // Source parameter from URL
     const sourceParam = req.query.source || '';
     

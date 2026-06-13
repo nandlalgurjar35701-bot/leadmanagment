@@ -7,6 +7,10 @@ const categorySchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
   urls: [
     {
       title: { type: String, trim: true },

@@ -11,6 +11,7 @@ router.use(authorize('Admin'));
 router.get('/', categoryController.getCategories);
 router.post('/', categoryController.createCategory);
 router.post('/delete/:id', categoryController.deleteCategory);
+router.post('/toggle-status/:id', categoryController.toggleCategoryStatus);
 
 // URL management routes (Admin only)
 router.post('/add-url/:id', categoryController.addCategoryUrl);

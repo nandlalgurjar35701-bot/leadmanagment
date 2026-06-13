@@ -121,3 +121,27 @@ exports.deleteCategoryUrl = async (req, res) => {
     res.redirect('/admin/categories');
   }
 };
+
+// Toggle Category Status (Active/Inactive)
+exports.toggleCategoryStatus = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const category = await Category.findById(id);
+    if (!category) {
+      req.session.error_msg = 'Category not found';
+      return res.redirect('/admin/categories');
+    }
+
+    // Toggle status
+    category.isActive = category.isActive === undefined ? false : !category.isActive;
+    await category.save();
+
+    req.session.success_msg = `Category "${category.name}" is now ${category.isActive ? 'Active' : 'Inactive'}.`;
+    res.redirect('/admin/categories');
+  } catch (error) {
+    console.error('Error toggling category status:', error);
+    req.session.error_msg = 'Failed to update category status';
+    res.redirect('/admin/categories');
+  }
+};
