@@ -23,4 +23,7 @@ router.post('/edit/:id', leadController.postEditLead);
 // Timeline log endpoint
 router.post('/timeline/:id', leadController.postAddTimelineEvent);
 
+// Quick notes update endpoint
+router.post('/view/:id/notes', leadController.postUpdateNotes);
+
 module.exports = router;

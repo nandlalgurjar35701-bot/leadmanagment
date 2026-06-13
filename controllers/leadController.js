@@ -450,6 +450,43 @@ exports.postAddTimelineEvent = async (req, res) => {
   }
 };
 
+// Update lead notes directly from details page
+exports.postUpdateNotes = async (req, res) => {
+  const { id } = req.params;
+  const { notes } = req.body;
+
+  try {
+    const lead = await Lead.findById(id);
+    if (!lead) {
+      req.session.error_msg = 'Lead not found';
+      return res.redirect('/leads');
+    }
+
+    // Authorization check
+    if (req.user.role !== 'Admin' && lead.assignedTo.toString() !== req.user._id.toString()) {
+      req.session.error_msg = 'You are not authorized to update this lead';
+      return res.redirect('/leads');
+    }
+
+    lead.notes = notes;
+    
+    // Add timeline action to log this note change
+    lead.timeline.push({
+      action: 'Notes Updated',
+      detail: 'Lead requirements/discussion notes were updated.',
+      performedBy: req.user._id
+    });
+
+    await lead.save();
+    req.session.success_msg = 'Lead notes updated successfully.';
+    res.redirect(`/leads/view/${id}`);
+  } catch (error) {
+    console.error('Error updating notes:', error);
+    req.session.error_msg = 'Failed to update lead notes';
+    res.redirect(`/leads/view/${id}`);
+  }
+};
+
 // Get Kanban Board view (Phase 5)
 exports.getKanbanBoard = async (req, res) => {
   try {
