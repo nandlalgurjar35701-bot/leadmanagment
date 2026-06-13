@@ -11,10 +11,7 @@ const app = express();
 app.get('/ping', (req, res) => res.status(200).send('pong'));
 
 // Connect to Database
-connectDB().then(() => {
-  seedAdminUser();
-  seedCategories();
-});
+connectDB();
 
 // Middleware
 app.use(express.json());
@@ -68,57 +65,7 @@ app.use((err, req, res, next) => {
   res.status(500).render('error', { title: 'Server Error', error: err.message, user: req.user || null });
 });
 
-// Seed default Admin user if none exists
-async function seedAdminUser() {
-  try {
-    const User = require('./models/User');
-    const adminExists = await User.findOne({ role: 'Admin' });
-    if (!adminExists) {
-      const admin = new User({
-        name: 'System Admin',
-        email: 'admin@crm.com',
-        password: 'admin123', // will be hashed automatically by userSchema pre-save hook
-        role: 'Admin',
-        isActive: true
-      });
-      await admin.save();
-      console.log('Default admin user seeded: admin@crm.com / admin123');
-    }
-  } catch (err) {
-    console.error('Failed to seed admin user:', err.message);
-  }
-}
 
-// Seed default website categories if collection is empty
-async function seedCategories() {
-  try {
-    const Category = require('./models/Category');
-    const count = await Category.countDocuments();
-    if (count === 0) {
-      const defaultCategories = [
-        "Salon",
-        "Clinic",
-        "Hospital",
-        "Restaurant",
-        "Hotel",
-        "School",
-        "Gym",
-        "Real Estate",
-        "Ecommerce",
-        "Travel Agency",
-        "NGO",
-        "Construction",
-        "Lawyer",
-        "CA",
-        "Personal Portfolio"
-      ];
-      await Category.insertMany(defaultCategories.map(name => ({ name })));
-      console.log('Default website categories seeded successfully.');
-    }
-  } catch (err) {
-    console.error('Failed to seed categories:', err.message);
-  }
-}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
