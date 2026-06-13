@@ -35,7 +35,7 @@ app.use((req, res, next) => {
   // Clear them after reading
   delete req.session.success_msg;
   delete req.session.error_msg;
-  
+
   // Pass logged-in user info (filled by auth middleware)
   res.locals.user = req.user || null;
   next();
